@@ -3,7 +3,7 @@
 
 target 'PYChartKit' do
 
-pod "PYControllers", "~> 0.2"
+pod "PYControllers"
 
 end
 
