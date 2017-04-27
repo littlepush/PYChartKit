@@ -7,12 +7,25 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2D6F3853EEE4BF6D0B66F488 /* libPods-PYChartKit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E18142E387D5FFD280BB684C /* libPods-PYChartKit.a */; };
+		66A6E20F40E9C7B8D89E537B /* libPods-PYChartKit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9310AE143B2DE35FE348F2F0 /* libPods-PYChartKit.a */; };
+		E66A099D1EB213CD0065E286 /* PYChartKitTest.m in Sources */ = {isa = PBXBuildFile; fileRef = E66A099C1EB213CD0065E286 /* PYChartKitTest.m */; };
+		E66A099F1EB213CD0065E286 /* libPYChartKit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E6E8B9461A7811D800FDF235 /* libPYChartKit.a */; };
 		E6E8B94A1A7811D800FDF235 /* PYChartKit.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = E6E8B9491A7811D800FDF235 /* PYChartKit.h */; };
 		E6E8B9661A7812E600FDF235 /* PYCurveChart.m in Sources */ = {isa = PBXBuildFile; fileRef = E6E8B9611A7812E600FDF235 /* PYCurveChart.m */; };
 		E6E8B9671A7812E600FDF235 /* PYCurveChartLayer.m in Sources */ = {isa = PBXBuildFile; fileRef = E6E8B9631A7812E600FDF235 /* PYCurveChartLayer.m */; };
 		E6E8B9681A7812E600FDF235 /* PYCycleProgress.m in Sources */ = {isa = PBXBuildFile; fileRef = E6E8B9651A7812E600FDF235 /* PYCycleProgress.m */; };
+		F6AA0A74D971C30E1E17A944 /* libPods-PYChartKitTest.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AC8B7DB44A88F8C6203DA845 /* libPods-PYChartKitTest.a */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		E66A09A01EB213CD0065E286 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E6E8B93E1A7811D800FDF235 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E6E8B9451A7811D800FDF235;
+			remoteInfo = PYChartKit;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		E6E8B9441A7811D800FDF235 /* CopyFiles */ = {
@@ -28,9 +41,13 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		3223B269B9788311214E0A55 /* Pods-PYChartKit.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PYChartKit.release.xcconfig"; path = "Pods/Target Support Files/Pods-PYChartKit/Pods-PYChartKit.release.xcconfig"; sourceTree = "<group>"; };
-		BA6372FBAB2E301350912765 /* Pods-PYChartKit.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PYChartKit.debug.xcconfig"; path = "Pods/Target Support Files/Pods-PYChartKit/Pods-PYChartKit.debug.xcconfig"; sourceTree = "<group>"; };
-		E18142E387D5FFD280BB684C /* libPods-PYChartKit.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-PYChartKit.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		5B37AF1B2825B2B246B3AAE7 /* Pods-PYChartKitTest.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PYChartKitTest.release.xcconfig"; path = "Pods/Target Support Files/Pods-PYChartKitTest/Pods-PYChartKitTest.release.xcconfig"; sourceTree = "<group>"; };
+		9310AE143B2DE35FE348F2F0 /* libPods-PYChartKit.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-PYChartKit.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		AC8B7DB44A88F8C6203DA845 /* libPods-PYChartKitTest.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-PYChartKitTest.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		ACE52EE28F5F4DA724E1592C /* Pods-PYChartKitTest.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PYChartKitTest.debug.xcconfig"; path = "Pods/Target Support Files/Pods-PYChartKitTest/Pods-PYChartKitTest.debug.xcconfig"; sourceTree = "<group>"; };
+		E66A099A1EB213CD0065E286 /* PYChartKitTest.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PYChartKitTest.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E66A099C1EB213CD0065E286 /* PYChartKitTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PYChartKitTest.m; sourceTree = "<group>"; };
+		E66A099E1EB213CD0065E286 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E6E8B9461A7811D800FDF235 /* libPYChartKit.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPYChartKit.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		E6E8B9491A7811D800FDF235 /* PYChartKit.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PYChartKit.h; sourceTree = "<group>"; };
 		E6E8B9601A7812E600FDF235 /* PYCurveChart.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PYCurveChart.h; sourceTree = "<group>"; };
@@ -39,44 +56,59 @@
 		E6E8B9631A7812E600FDF235 /* PYCurveChartLayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PYCurveChartLayer.m; sourceTree = "<group>"; };
 		E6E8B9641A7812E600FDF235 /* PYCycleProgress.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PYCycleProgress.h; sourceTree = "<group>"; };
 		E6E8B9651A7812E600FDF235 /* PYCycleProgress.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PYCycleProgress.m; sourceTree = "<group>"; };
+		F7C8F1CF54EAB0471D0A02AB /* Pods-PYChartKit.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PYChartKit.release.xcconfig"; path = "Pods/Target Support Files/Pods-PYChartKit/Pods-PYChartKit.release.xcconfig"; sourceTree = "<group>"; };
+		FFC026B8E39ACF2639547B75 /* Pods-PYChartKit.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PYChartKit.debug.xcconfig"; path = "Pods/Target Support Files/Pods-PYChartKit/Pods-PYChartKit.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		E66A09971EB213CD0065E286 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E66A099F1EB213CD0065E286 /* libPYChartKit.a in Frameworks */,
+				F6AA0A74D971C30E1E17A944 /* libPods-PYChartKitTest.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		E6E8B9431A7811D800FDF235 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2D6F3853EEE4BF6D0B66F488 /* libPods-PYChartKit.a in Frameworks */,
+				66A6E20F40E9C7B8D89E537B /* libPods-PYChartKit.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		6C8B6949994F794CD960312B /* Pods */ = {
+		54FE4A678CB1B50DE18B10F0 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				BA6372FBAB2E301350912765 /* Pods-PYChartKit.debug.xcconfig */,
-				3223B269B9788311214E0A55 /* Pods-PYChartKit.release.xcconfig */,
+				FFC026B8E39ACF2639547B75 /* Pods-PYChartKit.debug.xcconfig */,
+				F7C8F1CF54EAB0471D0A02AB /* Pods-PYChartKit.release.xcconfig */,
+				ACE52EE28F5F4DA724E1592C /* Pods-PYChartKitTest.debug.xcconfig */,
+				5B37AF1B2825B2B246B3AAE7 /* Pods-PYChartKitTest.release.xcconfig */,
 			);
 			name = Pods;
 			sourceTree = "<group>";
 		};
-		A618FD59F7D1E26AB6318AE7 /* Frameworks */ = {
+		E66A099B1EB213CD0065E286 /* PYChartKitTest */ = {
 			isa = PBXGroup;
 			children = (
-				E18142E387D5FFD280BB684C /* libPods-PYChartKit.a */,
+				E66A099C1EB213CD0065E286 /* PYChartKitTest.m */,
+				E66A099E1EB213CD0065E286 /* Info.plist */,
 			);
-			name = Frameworks;
+			path = PYChartKitTest;
 			sourceTree = "<group>";
 		};
 		E6E8B93D1A7811D800FDF235 = {
 			isa = PBXGroup;
 			children = (
 				E6E8B9481A7811D800FDF235 /* PYChartKit */,
+				E66A099B1EB213CD0065E286 /* PYChartKitTest */,
 				E6E8B9471A7811D800FDF235 /* Products */,
-				6C8B6949994F794CD960312B /* Pods */,
-				A618FD59F7D1E26AB6318AE7 /* Frameworks */,
+				54FE4A678CB1B50DE18B10F0 /* Pods */,
+				EC10542D2410F2E7C0FAB377 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -84,6 +116,7 @@
 			isa = PBXGroup;
 			children = (
 				E6E8B9461A7811D800FDF235 /* libPYChartKit.a */,
+				E66A099A1EB213CD0065E286 /* PYChartKitTest.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -102,18 +135,48 @@
 			path = PYChartKit;
 			sourceTree = "<group>";
 		};
+		EC10542D2410F2E7C0FAB377 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				9310AE143B2DE35FE348F2F0 /* libPods-PYChartKit.a */,
+				AC8B7DB44A88F8C6203DA845 /* libPods-PYChartKitTest.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		E66A09991EB213CD0065E286 /* PYChartKitTest */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E66A09A41EB213CD0065E286 /* Build configuration list for PBXNativeTarget "PYChartKitTest" */;
+			buildPhases = (
+				3F4E433A094ADC38702F3091 /* [CP] Check Pods Manifest.lock */,
+				E66A09961EB213CD0065E286 /* Sources */,
+				E66A09971EB213CD0065E286 /* Frameworks */,
+				E66A09981EB213CD0065E286 /* Resources */,
+				6DDB10CEE787EEF8ECB9F46A /* [CP] Embed Pods Frameworks */,
+				25D5770A885A6A7C3247F496 /* [CP] Copy Pods Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E66A09A11EB213CD0065E286 /* PBXTargetDependency */,
+			);
+			name = PYChartKitTest;
+			productName = PYChartKitTest;
+			productReference = E66A099A1EB213CD0065E286 /* PYChartKitTest.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		E6E8B9451A7811D800FDF235 /* PYChartKit */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = E6E8B95A1A7811D800FDF235 /* Build configuration list for PBXNativeTarget "PYChartKit" */;
 			buildPhases = (
-				5379FE8AB2938F44B45815BC /* Check Pods Manifest.lock */,
+				0DFFA66836D20631A287C142 /* [CP] Check Pods Manifest.lock */,
 				E6E8B9421A7811D800FDF235 /* Sources */,
 				E6E8B9431A7811D800FDF235 /* Frameworks */,
 				E6E8B9441A7811D800FDF235 /* CopyFiles */,
-				DF0DE2194966AE75888E5BAB /* Copy Pods Resources */,
+				F801D8329D4A317985D6D8BC /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -133,6 +196,11 @@
 				LastUpgradeCheck = 0610;
 				ORGANIZATIONNAME = "Push Lab";
 				TargetAttributes = {
+					E66A09991EB213CD0065E286 = {
+						CreatedOnToolsVersion = 8.3.1;
+						DevelopmentTeam = VT7263HWQT;
+						ProvisioningStyle = Automatic;
+					};
 					E6E8B9451A7811D800FDF235 = {
 						CreatedOnToolsVersion = 6.1.1;
 					};
@@ -151,34 +219,90 @@
 			projectRoot = "";
 			targets = (
 				E6E8B9451A7811D800FDF235 /* PYChartKit */,
+				E66A09991EB213CD0065E286 /* PYChartKitTest */,
 			);
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		E66A09981EB213CD0065E286 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXShellScriptBuildPhase section */
-		5379FE8AB2938F44B45815BC /* Check Pods Manifest.lock */ = {
+		0DFFA66836D20631A287C142 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = "Check Pods Manifest.lock";
+			name = "[CP] Check Pods Manifest.lock";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [[ $? != 0 ]] ; then\n    cat << EOM\nerror: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\nEOM\n    exit 1\nfi\n";
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
 			showEnvVarsInLog = 0;
 		};
-		DF0DE2194966AE75888E5BAB /* Copy Pods Resources */ = {
+		25D5770A885A6A7C3247F496 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = "Copy Pods Resources";
+			name = "[CP] Copy Pods Resources";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-PYChartKitTest/Pods-PYChartKitTest-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		3F4E433A094ADC38702F3091 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
+			showEnvVarsInLog = 0;
+		};
+		6DDB10CEE787EEF8ECB9F46A /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-PYChartKitTest/Pods-PYChartKitTest-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		F801D8329D4A317985D6D8BC /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Copy Pods Resources";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -189,6 +313,14 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		E66A09961EB213CD0065E286 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E66A099D1EB213CD0065E286 /* PYChartKitTest.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		E6E8B9421A7811D800FDF235 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -201,7 +333,59 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		E66A09A11EB213CD0065E286 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E6E8B9451A7811D800FDF235 /* PYChartKit */;
+			targetProxy = E66A09A01EB213CD0065E286 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		E66A09A21EB213CD0065E286 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = ACE52EE28F5F4DA724E1592C /* Pods-PYChartKitTest.debug.xcconfig */;
+			buildSettings = {
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = VT7263HWQT;
+				ENABLE_TESTABILITY = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				INFOPLIST_FILE = PYChartKitTest/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.3;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.pushlab.PYChartKitTest;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		E66A09A31EB213CD0065E286 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 5B37AF1B2825B2B246B3AAE7 /* Pods-PYChartKitTest.release.xcconfig */;
+			buildSettings = {
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = VT7263HWQT;
+				GCC_NO_COMMON_BLOCKS = YES;
+				INFOPLIST_FILE = PYChartKitTest/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.3;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.pushlab.PYChartKitTest;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 		E6E8B9581A7811D800FDF235 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -278,7 +462,7 @@
 		};
 		E6E8B95B1A7811D800FDF235 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = BA6372FBAB2E301350912765 /* Pods-PYChartKit.debug.xcconfig */;
+			baseConfigurationReference = FFC026B8E39ACF2639547B75 /* Pods-PYChartKit.debug.xcconfig */;
 			buildSettings = {
 				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -288,7 +472,7 @@
 		};
 		E6E8B95C1A7811D800FDF235 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 3223B269B9788311214E0A55 /* Pods-PYChartKit.release.xcconfig */;
+			baseConfigurationReference = F7C8F1CF54EAB0471D0A02AB /* Pods-PYChartKit.release.xcconfig */;
 			buildSettings = {
 				OTHER_LDFLAGS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -299,6 +483,14 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		E66A09A41EB213CD0065E286 /* Build configuration list for PBXNativeTarget "PYChartKitTest" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E66A09A21EB213CD0065E286 /* Debug */,
+				E66A09A31EB213CD0065E286 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
 		E6E8B9411A7811D800FDF235 /* Build configuration list for PBXProject "PYChartKit" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
