@@ -64,6 +64,12 @@ typedef struct {
 // Grid Line Width
 @property (nonatomic, assign)   CGFloat     gridLineWidth;
 
+// Show Axes
+@property (nonatomic, assign)   BOOL        displayAxes;
+
+// Show Grid Rules
+@property (nonatomic, assign)   BOOL        displayRules;
+
 // Initialize the surface with specified vertices.
 - (void)prepareSurfaceWithVertexTable:(PYChartSurface3DVertexTable)table expandTimes:(NSUInteger)expand;
 
