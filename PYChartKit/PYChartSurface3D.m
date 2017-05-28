@@ -86,8 +86,10 @@ GLuint              PYAxesIndices[PYAxesArrowLine * PYAxesDirectionCount * 2];
 PYChart3DVertex     PYRuleVertices[PYSurfaceGridRuleCount]; // 13 * 13 Grid
 GLuint              PYRuleIndices[PYSurfaceGridRuleIndexCount];  // 13 row, 13 col, 2 vertex one line
 
+#define PYSurfaceGridZRuleCount         36
+#define PYSurfaceGridZRuleIndexCount    38
 PYChart3DVertex     PYZRuleVertices[12 * 2 + 6 * 2];
-GLuint              PYZRuleIndices[(13 + 7) * 2];
+GLuint              PYZRuleIndices[(13 + 6) * 2];
 
 #define SET_VERTEX_COLOR(v, ci)             \
     (v).color[0] = (ci).red;                \
@@ -166,6 +168,7 @@ float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
 
 @interface PYChartSurface3D () <UIGestureRecognizerDelegate>
 {
+    float                           *_cachedValues;
     CAEAGLLayer                     *_eaglLayer;
     EAGLContext                     *_context;
     GLuint                          _colorRenderBuffer;
@@ -189,8 +192,10 @@ float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
     uint32_t                        _indexCount;
     
     // Rotate
-    float                           _currentRotation;
+    float                           _currentRotationAroundZ;
+    float                           _currentRotationAroundX;
     CGFloat                         _lastPanX;
+    CGFloat                         _lastPanY;
     
     // Grid Related
     BOOL                            _displayGrid;
@@ -203,12 +208,18 @@ float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
     // Axes Infos
     BOOL                            _displayAxes;
     BOOL                            _displayRules;
+    
+    // Display Mode
+    PYChartSurface3DDisplayMode     _displayMode;
+    PYChartSurface3DZoom            _zoomMode;
 }
 
 @end
 
 @implementation PYChartSurface3D
 
+@synthesize allowRotateAroundX;
+@synthesize allowRotateAroundZ;
 @synthesize delegate;
 
 @synthesize displayGrid = _displayGrid;
@@ -235,6 +246,20 @@ float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
 {
     _gridLineWidth = gridLineWidth;
     if ( _displayGrid ) [self render];
+}
+
+@synthesize displayMode = _displayMode;
+- (void)setDisplayMode:(PYChartSurface3DDisplayMode)displayMode
+{
+    _displayMode = displayMode;
+    if ( _cachedValues != NULL ) [self calculateAllVertexValues:_cachedValues];
+}
+
+@synthesize zoomMode = _zoomMode;
+- (void)setZoomMode:(PYChartSurface3DZoom)zoomMode
+{
+    _zoomMode = zoomMode;
+    if ( _cachedValues != NULL ) [self calculateAllVertexValues:_cachedValues];
 }
 
 + (void)initialize
@@ -279,6 +304,66 @@ float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
         PYRuleIndices[i * 2 + 0] = i - 1;
         PYRuleIndices[i * 2 + 1] = (48 - (i - 1 - 12)) % 48;
     }
+    SET_VERTEX_POSITION(PYZRuleVertices[0], -3, -3, 3);
+    SET_VERTEX_POSITION(PYZRuleVertices[1], -3, -2.5, 3);
+    SET_VERTEX_POSITION(PYZRuleVertices[2], -3, -2, 3);
+    SET_VERTEX_POSITION(PYZRuleVertices[3], -3, -1.5, 3);
+    SET_VERTEX_POSITION(PYZRuleVertices[4], -3, -1, 3);
+    SET_VERTEX_POSITION(PYZRuleVertices[5], -3, -0.5, 3);
+    SET_VERTEX_POSITION(PYZRuleVertices[6], -3, 0, 3);
+    SET_VERTEX_POSITION(PYZRuleVertices[7], -3, 0.5, 3);
+    SET_VERTEX_POSITION(PYZRuleVertices[8], -3, 1, 3);
+    SET_VERTEX_POSITION(PYZRuleVertices[9], -3, 1.5, 3);
+    SET_VERTEX_POSITION(PYZRuleVertices[10], -3, 2, 3);
+    SET_VERTEX_POSITION(PYZRuleVertices[11], -3, 2.5, 3);
+    SET_VERTEX_POSITION(PYZRuleVertices[12], -3, 3, 3);
+    SET_VERTEX_POSITION(PYZRuleVertices[13], -3, 3, 2.5);
+    SET_VERTEX_POSITION(PYZRuleVertices[14], -3, 3, 2);
+    SET_VERTEX_POSITION(PYZRuleVertices[15], -3, 3, 1.5);
+    SET_VERTEX_POSITION(PYZRuleVertices[16], -3, 3, 1);
+    SET_VERTEX_POSITION(PYZRuleVertices[17], -3, 3, 0.5);
+    SET_VERTEX_POSITION(PYZRuleVertices[18], -3, 3, 0);
+    SET_VERTEX_POSITION(PYZRuleVertices[19], -3, 2.5, 0);
+    SET_VERTEX_POSITION(PYZRuleVertices[20], -3, 2, 0);
+    SET_VERTEX_POSITION(PYZRuleVertices[21], -3, 1.5, 0);
+    SET_VERTEX_POSITION(PYZRuleVertices[22], -3, 1, 0);
+    SET_VERTEX_POSITION(PYZRuleVertices[23], -3, 0.5, 0);
+    SET_VERTEX_POSITION(PYZRuleVertices[24], -3, 0, 0);
+    SET_VERTEX_POSITION(PYZRuleVertices[25], -3, -0.5, 0);
+    SET_VERTEX_POSITION(PYZRuleVertices[26], -3, -1, 0);
+    SET_VERTEX_POSITION(PYZRuleVertices[27], -3, -1.5, 0);
+    SET_VERTEX_POSITION(PYZRuleVertices[28], -3, -2, 0);
+    SET_VERTEX_POSITION(PYZRuleVertices[29], -3, -2.5, 0);
+    SET_VERTEX_POSITION(PYZRuleVertices[30], -3, -3, 0);
+    SET_VERTEX_POSITION(PYZRuleVertices[31], -3, -3, 0.5);
+    SET_VERTEX_POSITION(PYZRuleVertices[32], -3, -3, 1);
+    SET_VERTEX_POSITION(PYZRuleVertices[33], -3, -3, 1.5);
+    SET_VERTEX_POSITION(PYZRuleVertices[34], -3, -3, 2);
+    SET_VERTEX_POSITION(PYZRuleVertices[35], -3, -3, 2.5);
+    PYZRuleIndices[0] = 0; PYZRuleIndices[1] = 30;
+    PYZRuleIndices[2] = 1; PYZRuleIndices[3] = 29;
+    PYZRuleIndices[4] = 2; PYZRuleIndices[5] = 28;
+    PYZRuleIndices[6] = 3; PYZRuleIndices[7] = 27;
+    PYZRuleIndices[8] = 4; PYZRuleIndices[9] = 26;
+    PYZRuleIndices[10] = 5; PYZRuleIndices[11] = 25;
+    PYZRuleIndices[12] = 6; PYZRuleIndices[13] = 24;
+    PYZRuleIndices[14] = 7; PYZRuleIndices[15] = 23;
+    PYZRuleIndices[16] = 8; PYZRuleIndices[17] = 22;
+    PYZRuleIndices[18] = 9; PYZRuleIndices[19] = 21;
+    PYZRuleIndices[20] = 10; PYZRuleIndices[21] = 20;
+    PYZRuleIndices[22] = 11; PYZRuleIndices[23] = 19;
+    PYZRuleIndices[24] = 12; PYZRuleIndices[25] = 18;
+    PYZRuleIndices[26] = 13; PYZRuleIndices[27] = 35;
+    PYZRuleIndices[28] = 14; PYZRuleIndices[29] = 34;
+    PYZRuleIndices[30] = 15; PYZRuleIndices[31] = 33;
+    PYZRuleIndices[32] = 16; PYZRuleIndices[33] = 32;
+    PYZRuleIndices[34] = 17; PYZRuleIndices[35] = 31;
+    PYZRuleIndices[36] = 0; PYZRuleIndices[37] = 12;
+    for ( uint32_t i = 0; i < PYSurfaceGridZRuleCount; ++i ) {
+        SET_VERTEX_COLOR(PYZRuleVertices[i], _pi);
+    }
+    
+    
     
     // Root Point
     SET_VERTEX_POSITION(PYAxesVertices[0], -3, 0, 0);
@@ -447,8 +532,9 @@ float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
     glUniformMatrix4fv(_projectionUniform, 1, 0, &_mProj.m11);
 
     CATransform3D _modelTransform = CATransform3DMakeTranslation(0, 0, -9);
-    _modelTransform = CATransform3DRotate(_modelTransform, -(M_PI_2 / 3 * 2 + M_PI_4 / 3), 1, 0, 0);
-    _modelTransform = CATransform3DRotate(_modelTransform, _currentRotation, 0, 0, 1);
+//    _modelTransform = CATransform3DRotate(_modelTransform, -(M_PI_2 / 3 * 2 + M_PI_4 / 3), 1, 0, 0);
+    _modelTransform = CATransform3DRotate(_modelTransform, _currentRotationAroundX, 1, 0, 0);
+    _modelTransform = CATransform3DRotate(_modelTransform, _currentRotationAroundZ, 0, 0, 1);
     _modelTransform = CATransform3DTranslate(_modelTransform, 0, 0, -1);
     PYChartMatrix _mModel;
     copyCATransform3DtoMatrix(&_modelTransform, &_mModel);
@@ -512,6 +598,18 @@ float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
         glVertexAttribPointer(_colorSolt, 4, GL_FLOAT, GL_FALSE, sizeof(PYChart3DVertex), (GLvoid *)(sizeof(float) * 3));
         glDrawElements(GL_LINES, PYSurfaceGridRuleIndexCount
                        , GL_UNSIGNED_INT, 0);
+        
+        glLineWidth(_eaglLayer.contentsScale / 2);
+        glBindBuffer(GL_ARRAY_BUFFER, _gridVerticesBuffer);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(PYChart3DVertex) * PYSurfaceGridZRuleCount,
+                     PYZRuleVertices, GL_STATIC_DRAW);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _gridIndexBuffer);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * PYSurfaceGridZRuleIndexCount,
+                     PYZRuleIndices, GL_STATIC_DRAW);
+        glVertexAttribPointer(_positionSlot, 3, GL_FLOAT, GL_FALSE, sizeof(PYChart3DVertex), 0);
+        glVertexAttribPointer(_colorSolt, 4, GL_FLOAT, GL_FALSE, sizeof(PYChart3DVertex), (GLvoid *)(sizeof(float) * 3));
+        glDrawElements(GL_LINES, PYSurfaceGridZRuleIndexCount
+                       , GL_UNSIGNED_INT, 0);
     }
     
     if ( _displayAxes ) {
@@ -554,27 +652,41 @@ float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
 
 - (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer
 {
-    _lastPanX = [gestureRecognizer locationInView:self].x;
+    CGPoint _tp = [gestureRecognizer locationInView:self];
+    _lastPanX = _tp.x;
+    _lastPanY = _tp.y;
     return YES;
 }
 
 - (void)panGestureHandle:(UIPanGestureRecognizer *)gesture
 {
     CGPoint _touchPoint = [gesture locationInView:self];
-    CGFloat _delta = _touchPoint.x - _lastPanX;
-    _lastPanX = _touchPoint.x;
-    CGFloat _max = self.frame.size.width;
-    _currentRotation += (_delta / _max) * (2 * M_PI);
+    if ( self.allowRotateAroundZ ) {
+        CGFloat _deltaX = _touchPoint.x - _lastPanX;
+        _lastPanX = _touchPoint.x;
+        CGFloat _maxX = self.frame.size.width;
+        _currentRotationAroundZ += (_deltaX / _maxX) * (2 * M_PI);
+    }
+    if ( self.allowRotateAroundX ) {
+        CGFloat _deltaY = _touchPoint.y - _lastPanY;
+        _lastPanY = _touchPoint.y;
+        CGFloat _maxY = self.frame.size.height;
+        _currentRotationAroundX += (_deltaY / _maxY) * (2 * M_PI);
+    }
     [self render];
 }
 
 - (void)viewJustBeenCreated
 {
     [super viewJustBeenCreated];
+    self.allowRotateAroundZ = YES;
+    self.allowRotateAroundX = NO;
+    _cachedValues = NULL;
     _vertices = NULL;
     _indices = NULL;
     _gridVertices = NULL;
-    _currentRotation = 0.f;
+    _currentRotationAroundZ = 0.f;
+    _currentRotationAroundX = -(M_PI_2 / 3 * 2 + M_PI_4 / 3);
     
     // Grid
     _gridLineWidth = 1.5f;
@@ -584,6 +696,10 @@ float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
     // Rule & Axes
     _displayRules = YES;
     _displayAxes = YES;
+    
+    // Display Mode
+    _displayMode = PYChartSurface3DDisplayModeSquare;
+    _zoomMode = PYChartSurface3DZoomNormal;
     
     UIPanGestureRecognizer *_pg = [[UIPanGestureRecognizer alloc]
                                    initWithTarget:self
@@ -616,6 +732,7 @@ float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
 - (void)dealloc
 {
     _context = nil;
+    if ( _cachedValues ) free(_cachedValues);
     if ( _vertices ) free(_vertices);
     if ( _indices ) free(_indices);
     if ( _gridVertices ) free(_gridVertices);
@@ -652,30 +769,60 @@ float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
     }
 }
 
-
-// Update the surface with vertex's value in Z, the values should contains table.row * table.column data
 - (void)updateVertexValues:(float *)values
 {
-    float _maxValue = 0;
+    if ( _cachedValues ) free(_cachedValues);
+    _cachedValues = (float *)malloc(sizeof(float) * _table.row * _table.column);
+    memcpy(_cachedValues, values, _table.row * _table.column * sizeof(float));
+    [self calculateAllVertexValues:_cachedValues];
+}
+// Update the surface with vertex's value in Z, the values should contains table.row * table.column data
+- (void)calculateAllVertexValues:(float *)values
+{
+    float _maxX = 4.f, _maxY = 4.f, _maxZ = 2.f;
+    if ( _zoomMode == PYChartSurface3DZoomSmall ) {
+        _maxX *= 0.75;
+        _maxY *= 0.75;
+        _maxZ *= 0.75;
+    } else if ( _zoomMode == PYChartSurface3DZoomBig ) {
+        _maxX *= 1.25;
+        _maxY *= 1.25;
+        _maxZ *= 1.25;
+    }
+    if ( _displayMode == PYChartSurface3DDisplayModeRelated ) {
+        if ( _table.row >= _table.column ) {
+            _maxY = ((float)_table.column / (float)_table.row) * _maxY;
+        } else {
+            _maxX = ((float)_table.row / (float)_table.column) * _maxX;
+        }
+    }
+    
+    float _maxValue = -FLT_MAX, _minValue = FLT_MAX;
     for ( uint32_t i = 0; i < (_table.row * _table.column); ++i ) {
         float _av = fabsf(values[i]);
         if ( _av > _maxValue ) _maxValue = _av;
+        if ( values[i] < _minValue ) _minValue = values[i];
     }
+    float _delta = _maxValue - _minValue;
     _maxValue *= 1.5;
+    float _originMaxV = _maxValue;
     for ( uint32_t i = 0; i < (_table.row * _table.column); ++i ) {
-        values[i] = (values[i]) / _maxValue * 2;
+        values[i] = (values[i]) / _maxValue * _maxZ;
     }
+    _delta = _delta / _maxValue * _maxZ;
+    _maxValue = 1.f / 1.5f * _maxZ;
+    _minValue = _maxValue - _delta;
     BOOL _customizedColor = [self.delegate respondsToSelector:@selector(surface3DChart:colorForValue:)];
     if ( _expandTimes == 1 ) {
         for ( uint32_t r = 0; r < _table.row; ++r ) {
             for ( uint32_t c = 0; c < _table.column; ++c ) {
                 uint32_t _i = r * _table.column + c;
-                _vertices[_i].position[0] = (float)c / ((float)_table.column - 1) * 4 - 2;
-                _vertices[_i].position[1] = -((float)r / ((float)_table.row - 1) * 4 - 2);
+                _vertices[_i].position[0] = (float)c / ((float)_table.column - 1) * _maxX - _maxX / 2;
+                _vertices[_i].position[1] = -((float)r / ((float)_table.row - 1) * _maxY - _maxY / 2);
                 _vertices[_i].position[2] = values[_i];
                 UIColor *_tc = nil;
                 if ( _customizedColor ) {
-                    _tc = [self.delegate surface3DChart:self colorForValue:values[_i] / 2 * _maxValue];
+                    _tc = [self.delegate surface3DChart:self colorForValue:values[_i] / _maxZ * _originMaxV];
                 } else {
                     _tc = [UIColor whiteColor];
                 }
@@ -696,23 +843,26 @@ float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
         for ( uint32_t c = 0; c < _col; ++c ) {
             if ( (c % _expandTimes) > 0 ) continue;
             for ( uint32_t r = 0; r < _table.row; ++r ) {
-                _cpos[r] = -((float)r / ((float)_table.row - 1) * 4 - 2);
+                _cpos[r] = -((float)r / ((float)_table.row - 1) * _maxY - _maxY / 2);
                 _zval[r] = values[r * _table.column + c / _expandTimes];
             }
             for ( uint32_t r = 0; r < _row; ++r ) {
                 uint32_t _i = r * _col + c;
-                float _x = (float)c / ((float)_col - 1) * 4 - 2;
-                float _y = -((float)r / ((float)_row - 1) * 4 - 2);
+                float _x = (float)c / ((float)_col - 1) * _maxX - _maxX / 2;
+                float _y = -((float)r / ((float)_row - 1) * _maxY - _maxY / 2);
                 float _value = _lagrange(_cpos, _zval, _table.row, _y);
-                SET_VERTEX_POSITION(_vertices[_i], _x, _y, _value);
                 UIColor *_tc = nil;
                 if ( _customizedColor ) {
-                    _tc = [self.delegate surface3DChart:self colorForValue:_value / 2 * _maxValue];
+                    _tc = [self.delegate surface3DChart:self colorForValue:_value / _maxZ * _originMaxV];
                 } else {
                     _tc = [UIColor whiteColor];
                 }
                 PYColorInfo _ci = _tc.colorInfo;
                 SET_VERTEX_COLOR(_vertices[_i], _ci);
+                
+                if ( _value > _maxValue ) _value = _maxValue + ((_value - _maxValue) / _value) / _maxZ;
+                if ( _value < _minValue ) _value = _minValue - (_minValue - _value) / (_maxValue - _value) / _maxZ;
+                SET_VERTEX_POSITION(_vertices[_i], _x, _y, _value);
             }
         }
         free(_cpos);
@@ -722,23 +872,26 @@ float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
         _zval = (float *)malloc(sizeof(float) * _table.column);
         for ( uint32_t r = 0; r < _row; ++r ) {
             for ( uint32_t c = 0; c < _table.column; ++c ) {
-                _rpos[c] = (float)c / ((float)_table.column - 1) * 4 - 2;
+                _rpos[c] = (float)c / ((float)_table.column - 1) * _maxX - _maxX / 2;
                 _zval[c] = _vertices[r * _col + c * _expandTimes].position[2];
             }
             for ( uint32_t c = 0; c < _col; ++c ) {
                 uint32_t _i = r * _col + c;
-                float _x = (float)c / ((float)_col - 1) * 4 - 2;
-                float _y = -((float)r / ((float)_row - 1) * 4 - 2);
+                float _x = (float)c / ((float)_col - 1) * _maxX - _maxX / 2;
+                float _y = -((float)r / ((float)_row - 1) * _maxY - _maxY / 2);
                 float _value = _lagrange(_rpos, _zval, _table.column, _x);
-                SET_VERTEX_POSITION(_vertices[_i], _x, _y, _value);
                 UIColor *_tc = nil;
                 if ( _customizedColor ) {
-                    _tc = [self.delegate surface3DChart:self colorForValue:_value / 2 * _maxValue];
+                    _tc = [self.delegate surface3DChart:self colorForValue:_value / _maxZ * _originMaxV];
                 } else {
                     _tc = [UIColor whiteColor];
                 }
                 PYColorInfo _ci = _tc.colorInfo;
                 SET_VERTEX_COLOR(_vertices[_i], _ci);
+
+                if ( _value > _maxValue ) _value = _maxValue + ((_value - _maxValue) / _value) / _maxZ;
+                if ( _value < _minValue ) _value = _minValue - (_minValue - _value) / (_maxValue - _value) / _maxZ;
+                SET_VERTEX_POSITION(_vertices[_i], _x, _y, _value);
             }
         }
         free(_rpos);

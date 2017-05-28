@@ -47,6 +47,17 @@ typedef struct {
     uint32_t        column;
 } PYChartSurface3DVertexTable;
 
+typedef NS_ENUM(NSInteger, PYChartSurface3DDisplayMode) {
+    PYChartSurface3DDisplayModeSquare,
+    PYChartSurface3DDisplayModeRelated
+};
+
+typedef NS_ENUM(NSInteger, PYChartSurface3DZoom) {
+    PYChartSurface3DZoomSmall,
+    PYChartSurface3DZoomNormal,
+    PYChartSurface3DZoomBig
+};
+
 // The Delegate
 @protocol PYChartSurface3DDelegate;
 
@@ -69,6 +80,18 @@ typedef struct {
 
 // Show Grid Rules
 @property (nonatomic, assign)   BOOL        displayRules;
+
+// Display mode, default is square mode
+@property (nonatomic, assign)   PYChartSurface3DDisplayMode displayMode;
+
+// Zoom mode, default is normal
+@property (nonatomic, assign)   PYChartSurface3DZoom        zoomMode;
+
+// Allow Rotate Around X or Z Axes
+// Default is NO
+@property (nonatomic, assign)   BOOL        allowRotateAroundX;
+// Default is YES
+@property (nonatomic, assign)   BOOL        allowRotateAroundZ;
 
 // Initialize the surface with specified vertices.
 - (void)prepareSurfaceWithVertexTable:(PYChartSurface3DVertexTable)table expandTimes:(NSUInteger)expand;
