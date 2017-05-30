@@ -69,8 +69,6 @@
 
 // If show the point, default is NO
 @property (nonatomic, assign)   BOOL        showPoint;
-// The point color, default is black
-@property (nonatomic, strong)   UIColor     *pointColor;
 // Point radius, default is 3
 @property (nonatomic, assign)   float       pointRaidus;
 
@@ -100,6 +98,8 @@
 - (CGFloat)chartLineWidth:(PYCurveChart *)chart forCurveAtIndex:(NSUInteger)index;
 // Default is Random
 - (UIColor *)chartLineColor:(PYCurveChart *)chart forCurveAtIndex:(NSUInteger)index;
+// Default is Random
+- (UIColor *)chartPointColor:(PYCurveChart *)chart forCurveAtIndex:(NSUInteger)index;
 
 @end
 

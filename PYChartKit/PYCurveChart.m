@@ -112,15 +112,6 @@
     [_chartLayer setShowPoints:_showPoint];
     [_chartLayer setNeedsDisplay];
 }
-// The point color, default is black
-@dynamic pointColor;
-- (UIColor *)pointColor { return _chartLayer.pointColor; }
-- (void)setPointColor:(UIColor *)pointColor
-{
-    [_chartLayer setPointColor:pointColor];
-    if ( _showPoint == NO ) return;
-    [_chartLayer setNeedsDisplay];
-}
 // Point radius, default is 3
 @dynamic pointRaidus;
 - (float)pointRaidus { return _chartLayer.pointRaidus; }
@@ -220,6 +211,13 @@
 {
     if ( [self.dataSource respondsToSelector:@selector(chartLineColor:forCurveAtIndex:)] ) {
         return [self.dataSource chartLineColor:self forCurveAtIndex:index];
+    }
+    return [UIColor randomColor];
+}
+- (UIColor *)chartPointColor:(PYCurveChartLayer *)chart forCurveAtIndex:(NSUInteger)index
+{
+    if ( [self.dataSource respondsToSelector:@selector(chartPointColor:forCurveAtIndex:)] ) {
+        return [self.dataSource chartPointColor:self forCurveAtIndex:index];
     }
     return [UIColor randomColor];
 }

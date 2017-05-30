@@ -59,9 +59,6 @@
 
 - (void)reloadChart:(BOOL)showPoints;
 
-// The point color;
-@property (nonatomic, strong)   UIColor     *pointColor;
-
 @property (nonatomic, assign)   BOOL        showPoints;
 
 // If show the shadow
@@ -87,6 +84,8 @@
 - (CGFloat)chartLineWidth:(PYCurveChartLayer *)chart forCurveAtIndex:(NSUInteger)index;
 // Default is Random
 - (UIColor *)chartLineColor:(PYCurveChartLayer *)chart forCurveAtIndex:(NSUInteger)index;
+// Default is the same to the line color
+- (UIColor *)chartPointColor:(PYCurveChartLayer *)chart forCurveAtIndex:(NSUInteger)index;
 
 @end
 

@@ -59,6 +59,7 @@ void getBezierCurveControlPoint(CGPoint p0, CGPoint p1, CGPoint p2, CGFloat t, C
 {
     NSMutableArray                  *_pathArray;
     NSMutableArray                  *_colorArray;
+    NSMutableArray                  *_pointColorArray;
     NSMutableArray                  *_pointsPathSource;
     BOOL                            _showPoints;
 }
@@ -71,7 +72,6 @@ void getBezierCurveControlPoint(CGPoint p0, CGPoint p1, CGPoint p2, CGFloat t, C
 - (void)layerJustBeenCreated
 {
     [super layerJustBeenCreated];
-    self.pointColor = [UIColor blackColor];
     self.tension = 0.5;
     _showPoints = NO;
     self.showShadow = YES;
@@ -83,7 +83,6 @@ void getBezierCurveControlPoint(CGPoint p0, CGPoint p1, CGPoint p2, CGFloat t, C
 - (void)layerJustBeenCopyed
 {
     [super layerJustBeenCopyed];
-    self.pointColor = [UIColor blackColor];
     self.tension = 0.5;
     _showPoints = NO;
     self.showShadow = YES;
@@ -110,10 +109,12 @@ void getBezierCurveControlPoint(CGPoint p0, CGPoint p1, CGPoint p2, CGFloat t, C
         [_pathArray removeAllObjects];
         [_colorArray removeAllObjects];
         [_pointsPathSource removeAllObjects];
+        [_pointColorArray removeAllObjects];
     } else {
         _pathArray = [NSMutableArray array];
         _colorArray = [NSMutableArray array];
         _pointsPathSource = [NSMutableArray array];
+        _pointColorArray = [NSMutableArray array];
     }
     
     // Record the flag;
@@ -179,6 +180,12 @@ void getBezierCurveControlPoint(CGPoint p0, CGPoint p1, CGPoint p2, CGFloat t, C
         } else {
             [_colorArray addObject:[UIColor randomColor]];
         }
+        
+        if ( [self.dataSource respondsToSelector:@selector(chartPointColor:forCurveAtIndex:)] ) {
+            [_pointColorArray addObject:[self.dataSource chartPointColor:self forCurveAtIndex:_cc]];
+        } else {
+            [_pointColorArray addObject:[_colorArray lastObject]];
+        }
     }
     
     [self setNeedsDisplay];
@@ -188,10 +195,12 @@ void getBezierCurveControlPoint(CGPoint p0, CGPoint p1, CGPoint p2, CGFloat t, C
 {
     self.contentsScale = [UIScreen mainScreen].scale;
     NSUInteger _c = _pathArray.count;
+    UIColor *_wcolor = [UIColor whiteColor];
     
     for ( NSUInteger i = 0; i < _c; ++i ) {
         UIBezierPath *_bPath = [_pathArray objectAtIndex:i];
         UIColor *_lColor = [_colorArray objectAtIndex:i];
+        UIColor *_pColor = [_pointColorArray objectAtIndex:i];
 
         // Shadow
         if ( self.showShadow ) {
@@ -224,11 +233,14 @@ void getBezierCurveControlPoint(CGPoint p0, CGPoint p1, CGPoint p2, CGFloat t, C
         CGContextStrokePath(ctx);
         
         if ( _showPoints ) {
-            CGContextSetFillColorWithColor(ctx, self.pointColor.CGColor);
+            CGContextSetFillColorWithColor(ctx, _wcolor.CGColor);
+            CGContextSetStrokeColorWithColor(ctx, _pColor.CGColor);
+            CGContextSetLineWidth(ctx, _bPath.lineWidth);
             NSMutableArray *_sourcePoints = [_pointsPathSource objectAtIndex:i];
             for ( UIBezierPath *_ptPath in _sourcePoints ) {
                 CGContextAddPath(ctx, _ptPath.CGPath);
-                CGContextFillPath(ctx);
+//                CGContextFillPath(ctx);
+                CGContextDrawPath(ctx, kCGPathFillStroke);
             }
         }
     }
