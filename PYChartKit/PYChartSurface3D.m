@@ -41,9 +41,8 @@
  */
 
 #import "PYChartSurface3D.h"
-#import <OpenGLES/ES2/gl.h>
-#import <OpenGLES/ES2/glext.h>
 #import <PYCore/PYCore.h>
+#import "PYChartSurface3DUtility.h"
 
 /*
  attribute vec4 Position;
@@ -65,88 +64,7 @@ NSString * PYChartVertexShadarString;
  */
 NSString * PYChartFragmentShadarString;
 
-typedef struct {
-    float position[3];
-    float color[4];
-} PYChart3DVertex;
-
-typedef struct {
-    // Matrix data order in:
-    float m11, m12, m13, m14;
-    float m21, m22, m23, m24;
-    float m31, m32, m33, m34;
-    float m41, m42, m43, m44;
-} PYChartMatrix;
-#define PYAxesDirectionCount        4   // X, Y+, Y-, Z
-#define PYAxesArrowLine             3
-PYChart3DVertex     PYAxesVertices[PYAxesDirectionCount * PYAxesArrowLine + 1];
-GLuint              PYAxesIndices[PYAxesArrowLine * PYAxesDirectionCount * 2];
-#define PYSurfaceGridRuleCount      (12 * 4)
-#define PYSurfaceGridRuleIndexCount (13 * 2 * 2)
-PYChart3DVertex     PYRuleVertices[PYSurfaceGridRuleCount]; // 13 * 13 Grid
-GLuint              PYRuleIndices[PYSurfaceGridRuleIndexCount];  // 13 row, 13 col, 2 vertex one line
-
-#define PYSurfaceGridZRuleCount         36
-#define PYSurfaceGridZRuleIndexCount    38
-PYChart3DVertex     PYZRuleVertices[12 * 2 + 6 * 2];
-GLuint              PYZRuleIndices[(13 + 6) * 2];
-
-#define SET_VERTEX_COLOR(v, ci)             \
-    (v).color[0] = (ci).red;                \
-    (v).color[1] = (ci).green;              \
-    (v).color[2] = (ci).blue;               \
-    (v).color[3] = (ci).alpha
-#define SET_VERTEX_POSITION(v, x, y, z)     \
-    (v).position[0] = (x);                  \
-    (v).position[1] = (y);                  \
-    (v).position[2] = (z)
-#define SET_LINE_INDEX(l, i, s, e)          \
-    (l)[i * 2] = s;                         \
-    (l)[i * 2 + 1] = e
-
-void glMatrixFrustum(PYChartMatrix *m, float left, float right, float bottom, float top, float near, float far) {
-    m->m11 = 2 * near / (right - left);
-    m->m12 = 0;
-    m->m13 = 0;
-    m->m14 = 0;
-    
-    m->m21 = 0;
-    m->m22 = 2 * near / (top - bottom);
-    m->m23 = 0;
-    m->m24 = 0;
-    
-    m->m31 = (right + left) / (right - left);
-    m->m32 = (top + bottom) / (top - bottom);
-    m->m33 = -(far + near) / (far - near);
-    m->m34 = -1;
-    
-    m->m41 = 0;
-    m->m42 = 0;
-    m->m43 = -2 * far * near / (far - near);
-    m->m44 = 0;
-}
-
-void copyCATransform3DtoMatrix(const CATransform3D *transform, PYChartMatrix *m)
-{
-    m->m11 = (float)transform->m11;
-    m->m12 = (float)transform->m12;
-    m->m13 = (float)transform->m13;
-    m->m14 = (float)transform->m14;
-    m->m21 = (float)transform->m21;
-    m->m22 = (float)transform->m22;
-    m->m23 = (float)transform->m23;
-    m->m24 = (float)transform->m24;
-    m->m31 = (float)transform->m31;
-    m->m32 = (float)transform->m32;
-    m->m33 = (float)transform->m33;
-    m->m34 = (float)transform->m34;
-    m->m41 = (float)transform->m41;
-    m->m42 = (float)transform->m42;
-    m->m43 = (float)transform->m43;
-    m->m44 = (float)transform->m44;
-}
-
-float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
+/*float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
 {
     float *_lvalue = (float *)malloc(sizeof(float) * count);
     float _y = 0.f;
@@ -164,59 +82,94 @@ float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
     }
     free(_lvalue);
     return _y;
-}
+}*/
 
 @interface PYChartSurface3D () <UIGestureRecognizerDelegate>
 {
-    float                           *_cachedValues;
+    // Open GL
     CAEAGLLayer                     *_eaglLayer;
     EAGLContext                     *_context;
     GLuint                          _colorRenderBuffer;
     GLuint                          _depthRenderBuffer;
     GLuint                          _frameBuffer;
-    
+
     // Shader
     GLuint                          _positionSlot;
     GLuint                          _colorSolt;
     GLuint                          _projectionUniform;
     GLuint                          _modelViewUniform;
-    
-    // Surface Buffer
-    GLuint                          _verticesBuffer;
-    GLuint                          _indicesBuffer;
-    PYChartSurface3DVertexTable     _table;
-    NSUInteger                      _expandTimes;
-    PYChart3DVertex                 *_vertices;
-    uint32_t                        _vertixCount;
-    GLuint                          *_indices;
-    uint32_t                        _indexCount;
-    
+
+    // Grid Related
+    BOOL                            _displayGrid;
+    UIColor                         *_dataGridLineColor;
+    CGFloat                         _dataGridLineWidth;
+    // Axes Infos
+    BOOL                            _displayAxes;
+    CGFloat                         _axesLineWidth;
+    UIColor                         *_axesLineColor;
+    // Ruler
+    BOOL                            _displayRules;
+    CGFloat                         _rulesLineWidth;
+    UIColor                         *_rulesLineColor;
     // Rotate
     float                           _currentRotationAroundZ;
     float                           _currentRotationAroundX;
     CGFloat                         _lastPanX;
     CGFloat                         _lastPanY;
-    
-    // Grid Related
-    BOOL                            _displayGrid;
-    GLuint                          _gridVerticesBuffer;
-    GLuint                          _gridIndexBuffer;
-    PYChart3DVertex                 *_gridVertices;
-    UIColor                         *_gridLineColor;
-    CGFloat                         _gridLineWidth;
-    
-    // Axes Infos
-    BOOL                            _displayAxes;
-    BOOL                            _displayRules;
-    
     // Display Mode
     PYChartSurface3DDisplayMode     _displayMode;
     PYChartSurface3DZoom            _zoomMode;
+    
+    // Data
+    float                           *_cachedValues;
+    PYChartSurface3DVertexTable     _table;
+    NSUInteger                      _expandTimes;
+
+    // Buffers
+    PYChart3DRenderGroup            _rgData;
+    PYChart3DRenderGroup            _rgDataGrid;
+    // X
+    PYChart3DRenderGroup            _rgAxesX;
+    // Y+
+    PYChart3DRenderGroup            _rgAxesYPostive;
+    // Y-
+    PYChart3DRenderGroup            _rgAxesYNagitive;
+    // Z
+    PYChart3DRenderGroup            _rgAxesZ;
+    // XY
+    PYChart3DRenderGroup            _rgRulesXY;
+    // YZ
+    PYChart3DRenderGroup            _rgRulesYZ;
 }
 
 @end
 
 @implementation PYChartSurface3D
+
+- (void)__glUpdateVerticesOfRenderGroup:(PYChart3DRenderGroup *)rg withNewColor:(UIColor *)color
+{
+    PYColorInfo _pi = color.colorInfo;
+    for ( uint32_t i = 0; i < rg->vertexCount; ++i ) {
+        PYCHART_SET_VERTEX_COLOR(rg->vertices[i], _pi);
+    }
+}
+- (void)__glUpdateVertexDataOfRenderGroup:(PYChart3DRenderGroup *)rg drawMode:(GLenum)mode
+{
+    glBindBuffer(GL_ARRAY_BUFFER, rg->verticesBuffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(PYChart3DVertex) * rg->vertexCount,
+                 rg->vertices, mode);
+}
+- (void)__glUpdateIndexDataOfRenderGroup:(PYChart3DRenderGroup *)rg drawMode:(GLenum)mode
+{
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rg->indicesBuffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * rg->indexCount,
+                 rg->indices, mode);
+}
+- (void)__glUpdateAllDataOfRenderGroup:(PYChart3DRenderGroup *)rg drawMode:(GLenum)mode
+{
+    [self __glUpdateVertexDataOfRenderGroup:rg drawMode:mode];
+    [self __glUpdateIndexDataOfRenderGroup:rg drawMode:mode];
+}
 
 @synthesize allowRotateAroundX;
 @synthesize allowRotateAroundZ;
@@ -229,23 +182,72 @@ float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
     [self render];
 }
 
-@synthesize gridColor = _gridLineColor;
+@synthesize gridColor = _dataGridLineColor;
 - (void)setGridColor:(UIColor *)gridColor
 {
-    _gridLineColor = [gridColor copy];
-    if ( _gridVertices == NULL ) return;
-    PYColorInfo _pi = _gridLineColor.colorInfo;
-    for ( uint32_t i = 0; i < _vertixCount; ++i ) {
-        SET_VERTEX_COLOR(_gridVertices[i], _pi);
-    }
+    _dataGridLineColor = [gridColor copy];
+    if ( _rgDataGrid.vertices == NULL ) return;
+    [self __glUpdateVerticesOfRenderGroup:&_rgDataGrid withNewColor:gridColor];
+    // Buffer the data
+    [self __glUpdateVertexDataOfRenderGroup:&_rgDataGrid drawMode:GL_STREAM_DRAW];
     if ( _displayGrid ) [self render];
 }
 
-@synthesize gridLineWidth = _gridLineWidth;
+@synthesize gridLineWidth = _dataGridLineWidth;
 - (void)setGridLineWidth:(CGFloat)gridLineWidth
 {
-    _gridLineWidth = gridLineWidth;
+    _dataGridLineWidth = gridLineWidth;
     if ( _displayGrid ) [self render];
+}
+
+@synthesize axesColor = _axesLineColor;
+- (void)setAxesColor:(UIColor *)axesColor
+{
+    _axesLineColor = [axesColor copy];
+    if ( _rgAxesX.vertices != NULL ) {
+        [self __glUpdateVerticesOfRenderGroup:&_rgAxesX withNewColor:axesColor];
+        [self __glUpdateVertexDataOfRenderGroup:&_rgAxesX drawMode:GL_STATIC_DRAW];
+    }
+    if ( _rgAxesYPostive.vertices != NULL ) {
+        [self __glUpdateVerticesOfRenderGroup:&_rgAxesYPostive withNewColor:axesColor];
+        [self __glUpdateVertexDataOfRenderGroup:&_rgAxesYPostive drawMode:GL_STATIC_DRAW];
+    }
+    if ( _rgAxesYNagitive.vertices != NULL ) {
+        [self __glUpdateVerticesOfRenderGroup:&_rgAxesYNagitive withNewColor:axesColor];
+        [self __glUpdateVertexDataOfRenderGroup:&_rgAxesYNagitive drawMode:GL_STATIC_DRAW];
+    }
+    if ( _rgAxesZ.vertices != NULL ) {
+        [self __glUpdateVerticesOfRenderGroup:&_rgAxesZ withNewColor:axesColor];
+        [self __glUpdateVertexDataOfRenderGroup:&_rgAxesZ drawMode:GL_STATIC_DRAW];
+    }
+    if ( _displayAxes ) [self render];
+}
+@synthesize axesLineWidth = _axesLineWidth;
+- (void)setAxesLineWidth:(CGFloat)axesLineWidth
+{
+    _axesLineWidth = axesLineWidth;
+    if ( _displayAxes ) [self render];
+}
+
+@synthesize rulesColor = _rulesLineColor;
+- (void)setRulesColor:(UIColor *)rulesColor
+{
+    _rulesLineColor = [rulesColor copy];
+    if ( _rgRulesXY.vertices != NULL ) {
+        [self __glUpdateVerticesOfRenderGroup:&_rgRulesXY withNewColor:rulesColor];
+        [self __glUpdateVertexDataOfRenderGroup:&_rgRulesXY drawMode:GL_STATIC_DRAW];
+    }
+    if ( _rgRulesYZ.vertices != NULL ) {
+        [self __glUpdateVerticesOfRenderGroup:&_rgRulesYZ withNewColor:rulesColor];
+        [self __glUpdateVertexDataOfRenderGroup:&_rgRulesYZ drawMode:GL_STATIC_DRAW];
+    }
+    if ( _displayRules ) [self render];
+}
+@synthesize rulesLineWidth = _rulesLineWidth;
+- (void)setRulesLineWidth:(CGFloat)rulesLineWidth
+{
+    _rulesLineWidth = rulesLineWidth;
+    if ( _displayRules ) [self render];
 }
 
 @synthesize displayMode = _displayMode;
@@ -259,7 +261,9 @@ float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
 - (void)setZoomMode:(PYChartSurface3DZoom)zoomMode
 {
     _zoomMode = zoomMode;
-    if ( _cachedValues != NULL ) [self calculateAllVertexValues:_cachedValues];
+    if ( _cachedValues != NULL ) {
+        [self calculateAllVertexValues:_cachedValues];
+    }
 }
 
 + (void)initialize
@@ -279,149 +283,7 @@ float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
                                    @"void main(void) {",
                                    @"gl_FragColor = _destClr",
                                    @"}"];
-    PYColorInfo _pi = [UIColor lightGrayColor].colorInfo;
-    for ( uint32_t i = 0; i < 12; ++i ) {
-        SET_VERTEX_POSITION(PYRuleVertices[i + 12 * 0], -3 + 0.5 * i, 3, 0);
-        SET_VERTEX_COLOR(PYRuleVertices[i + 12 * 0], _pi);
-    }
-    for ( uint32_t i = 0; i < 12; ++i ) {
-        SET_VERTEX_POSITION(PYRuleVertices[i + 12 * 1], 3, 3 - 0.5 * i, 0);
-        SET_VERTEX_COLOR(PYRuleVertices[i + 12 * 1], _pi);
-    }
-    for ( uint32_t i = 0; i < 12; ++i ) {
-        SET_VERTEX_POSITION(PYRuleVertices[i + 12 * 2], 3 - 0.5 * i, -3, 0);
-        SET_VERTEX_COLOR(PYRuleVertices[i + 12 * 2], _pi);
-    }
-    for ( uint32_t i = 0; i < 12; ++i ) {
-        SET_VERTEX_POSITION(PYRuleVertices[i + 12 * 3], -3, -3 + 0.5 * i, 0);
-        SET_VERTEX_COLOR(PYRuleVertices[i + 12 * 3], _pi);
-    }
-    for ( uint32_t i = 0; i < 13; ++i ) {
-        PYRuleIndices[i * 2 + 0] = i;
-        PYRuleIndices[i * 2 + 1] = 36 - i;
-    }
-    for ( uint32_t i = 13; i < 26; ++i ) {
-        PYRuleIndices[i * 2 + 0] = i - 1;
-        PYRuleIndices[i * 2 + 1] = (48 - (i - 1 - 12)) % 48;
-    }
-    SET_VERTEX_POSITION(PYZRuleVertices[0], -3, -3, 3);
-    SET_VERTEX_POSITION(PYZRuleVertices[1], -3, -2.5, 3);
-    SET_VERTEX_POSITION(PYZRuleVertices[2], -3, -2, 3);
-    SET_VERTEX_POSITION(PYZRuleVertices[3], -3, -1.5, 3);
-    SET_VERTEX_POSITION(PYZRuleVertices[4], -3, -1, 3);
-    SET_VERTEX_POSITION(PYZRuleVertices[5], -3, -0.5, 3);
-    SET_VERTEX_POSITION(PYZRuleVertices[6], -3, 0, 3);
-    SET_VERTEX_POSITION(PYZRuleVertices[7], -3, 0.5, 3);
-    SET_VERTEX_POSITION(PYZRuleVertices[8], -3, 1, 3);
-    SET_VERTEX_POSITION(PYZRuleVertices[9], -3, 1.5, 3);
-    SET_VERTEX_POSITION(PYZRuleVertices[10], -3, 2, 3);
-    SET_VERTEX_POSITION(PYZRuleVertices[11], -3, 2.5, 3);
-    SET_VERTEX_POSITION(PYZRuleVertices[12], -3, 3, 3);
-    SET_VERTEX_POSITION(PYZRuleVertices[13], -3, 3, 2.5);
-    SET_VERTEX_POSITION(PYZRuleVertices[14], -3, 3, 2);
-    SET_VERTEX_POSITION(PYZRuleVertices[15], -3, 3, 1.5);
-    SET_VERTEX_POSITION(PYZRuleVertices[16], -3, 3, 1);
-    SET_VERTEX_POSITION(PYZRuleVertices[17], -3, 3, 0.5);
-    SET_VERTEX_POSITION(PYZRuleVertices[18], -3, 3, 0);
-    SET_VERTEX_POSITION(PYZRuleVertices[19], -3, 2.5, 0);
-    SET_VERTEX_POSITION(PYZRuleVertices[20], -3, 2, 0);
-    SET_VERTEX_POSITION(PYZRuleVertices[21], -3, 1.5, 0);
-    SET_VERTEX_POSITION(PYZRuleVertices[22], -3, 1, 0);
-    SET_VERTEX_POSITION(PYZRuleVertices[23], -3, 0.5, 0);
-    SET_VERTEX_POSITION(PYZRuleVertices[24], -3, 0, 0);
-    SET_VERTEX_POSITION(PYZRuleVertices[25], -3, -0.5, 0);
-    SET_VERTEX_POSITION(PYZRuleVertices[26], -3, -1, 0);
-    SET_VERTEX_POSITION(PYZRuleVertices[27], -3, -1.5, 0);
-    SET_VERTEX_POSITION(PYZRuleVertices[28], -3, -2, 0);
-    SET_VERTEX_POSITION(PYZRuleVertices[29], -3, -2.5, 0);
-    SET_VERTEX_POSITION(PYZRuleVertices[30], -3, -3, 0);
-    SET_VERTEX_POSITION(PYZRuleVertices[31], -3, -3, 0.5);
-    SET_VERTEX_POSITION(PYZRuleVertices[32], -3, -3, 1);
-    SET_VERTEX_POSITION(PYZRuleVertices[33], -3, -3, 1.5);
-    SET_VERTEX_POSITION(PYZRuleVertices[34], -3, -3, 2);
-    SET_VERTEX_POSITION(PYZRuleVertices[35], -3, -3, 2.5);
-    PYZRuleIndices[0] = 0; PYZRuleIndices[1] = 30;
-    PYZRuleIndices[2] = 1; PYZRuleIndices[3] = 29;
-    PYZRuleIndices[4] = 2; PYZRuleIndices[5] = 28;
-    PYZRuleIndices[6] = 3; PYZRuleIndices[7] = 27;
-    PYZRuleIndices[8] = 4; PYZRuleIndices[9] = 26;
-    PYZRuleIndices[10] = 5; PYZRuleIndices[11] = 25;
-    PYZRuleIndices[12] = 6; PYZRuleIndices[13] = 24;
-    PYZRuleIndices[14] = 7; PYZRuleIndices[15] = 23;
-    PYZRuleIndices[16] = 8; PYZRuleIndices[17] = 22;
-    PYZRuleIndices[18] = 9; PYZRuleIndices[19] = 21;
-    PYZRuleIndices[20] = 10; PYZRuleIndices[21] = 20;
-    PYZRuleIndices[22] = 11; PYZRuleIndices[23] = 19;
-    PYZRuleIndices[24] = 12; PYZRuleIndices[25] = 18;
-    PYZRuleIndices[26] = 13; PYZRuleIndices[27] = 35;
-    PYZRuleIndices[28] = 14; PYZRuleIndices[29] = 34;
-    PYZRuleIndices[30] = 15; PYZRuleIndices[31] = 33;
-    PYZRuleIndices[32] = 16; PYZRuleIndices[33] = 32;
-    PYZRuleIndices[34] = 17; PYZRuleIndices[35] = 31;
-    PYZRuleIndices[36] = 0; PYZRuleIndices[37] = 12;
-    for ( uint32_t i = 0; i < PYSurfaceGridZRuleCount; ++i ) {
-        SET_VERTEX_COLOR(PYZRuleVertices[i], _pi);
-    }
-    
-    
-    
-    // Root Point
-    SET_VERTEX_POSITION(PYAxesVertices[0], -3, 0, 0);
-    SET_VERTEX_COLOR(PYAxesVertices[0], _pi);
-    
-    // X
-    SET_VERTEX_POSITION(PYAxesVertices[1], 3.5, 0, 0);
-    SET_VERTEX_COLOR(PYAxesVertices[1], _pi);
-    SET_VERTEX_POSITION(PYAxesVertices[2], 3.4, 0.1, 0);
-    SET_VERTEX_COLOR(PYAxesVertices[1], _pi);
-    SET_VERTEX_POSITION(PYAxesVertices[3], 3.4, -0.1, 0);
-    SET_VERTEX_COLOR(PYAxesVertices[3], _pi);
-    SET_LINE_INDEX(PYAxesIndices, 0, 0, 1);
-    SET_LINE_INDEX(PYAxesIndices, 1, 1, 2);
-    SET_LINE_INDEX(PYAxesIndices, 2, 1, 3);
-
-    // Y+
-    SET_VERTEX_POSITION(PYAxesVertices[4], -3, 3.5, 0);
-    SET_VERTEX_COLOR(PYAxesVertices[4], _pi);
-    SET_VERTEX_POSITION(PYAxesVertices[5], -3.1, 3.4, 0);
-    SET_VERTEX_COLOR(PYAxesVertices[5], _pi);
-    SET_VERTEX_POSITION(PYAxesVertices[6], -2.9, 3.4, 0);
-    SET_VERTEX_COLOR(PYAxesVertices[6], _pi);
-    SET_LINE_INDEX(PYAxesIndices, 3, 0, 4);
-    SET_LINE_INDEX(PYAxesIndices, 4, 4, 5);
-    SET_LINE_INDEX(PYAxesIndices, 5, 4, 6);
-    
-    // Y-
-    SET_VERTEX_POSITION(PYAxesVertices[7], -3, -3.5, 0);
-    SET_VERTEX_COLOR(PYAxesVertices[7], _pi);
-    SET_VERTEX_POSITION(PYAxesVertices[8], -3.1, -3.4, 0);
-    SET_VERTEX_COLOR(PYAxesVertices[8], _pi);
-    SET_VERTEX_POSITION(PYAxesVertices[9], -2.9, -3.4, 0);
-    SET_VERTEX_COLOR(PYAxesVertices[9], _pi);
-    SET_LINE_INDEX(PYAxesIndices, 6, 0, 7);
-    SET_LINE_INDEX(PYAxesIndices, 7, 7, 8);
-    SET_LINE_INDEX(PYAxesIndices, 8, 7, 9);
-    
-    // Z
-    SET_VERTEX_POSITION(PYAxesVertices[10], -3, 0, 3.5);
-    SET_VERTEX_COLOR(PYAxesVertices[10], _pi);
-    SET_VERTEX_POSITION(PYAxesVertices[11], -3, 0.1, 3.4);
-    SET_VERTEX_COLOR(PYAxesVertices[11], _pi);
-    SET_VERTEX_POSITION(PYAxesVertices[12], -3, -0.1, 3.4);
-    SET_VERTEX_COLOR(PYAxesVertices[12], _pi);
-    SET_LINE_INDEX(PYAxesIndices, 9, 0, 10);
-    SET_LINE_INDEX(PYAxesIndices, 10, 10, 11);
-    SET_LINE_INDEX(PYAxesIndices, 11, 10, 12);
-    
 }
-
-/*
-// Only override drawRect: if you perform custom drawing.
-// An empty implementation adversely affects performance during animation.
-- (void)drawRect:(CGRect)rect {
-    // Drawing code
-}
-*/
 
 + (Class)layerClass { return [CAEAGLLayer class]; }
 
@@ -446,7 +308,7 @@ float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
 }
 
 // Initialize the OpenGL Context
-- (BOOL)setupContext
+- (BOOL)__setupGLContext
 {
     EAGLRenderingAPI api = kEAGLRenderingAPIOpenGLES2;
     _context = [[EAGLContext alloc] initWithAPI:api];
@@ -462,12 +324,12 @@ float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
     return YES;
 }
 
-- (void)resizeBuffer {
+- (void)__resizeGLRenderBuffer {
     glBindRenderbuffer(GL_RENDERBUFFER, _depthRenderBuffer);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16,
                           self.frame.size.width * _eaglLayer.contentsScale,
                           self.frame.size.height * _eaglLayer.contentsScale);
-
+    
     glBindRenderbuffer(GL_RENDERBUFFER, _colorRenderBuffer);
     [_context renderbufferStorage:GL_RENDERBUFFER fromDrawable:_eaglLayer];
     
@@ -478,7 +340,7 @@ float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
                               GL_RENDERBUFFER, _depthRenderBuffer);
 }
 
-- (BOOL)compileShaders {
+- (BOOL)__compileShader {
     GLuint _vertexShader = [PYChartSurface3D
                             compileShadarString:PYChartVertexShadarString
                             withType:GL_VERTEX_SHADER];
@@ -511,122 +373,76 @@ float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
     return YES;
 }
 
-- (void)setupVBOs {
-    glGenBuffers(1, &_verticesBuffer);
-    glGenBuffers(1, &_indicesBuffer);
-    glGenBuffers(1, &_gridVerticesBuffer);
-    glGenBuffers(1, &_gridIndexBuffer);
+- (void)__initAllRenderGroup {
+    PYChart3DRenderGroupGenBuffer(&_rgData);
+    PYChart3DRenderGroupGenBuffer(&_rgDataGrid);
+    PYChart3DRenderGroupGenBuffer(&_rgAxesX);
+    PYChart3DRenderGroupGenBuffer(&_rgAxesYPostive);
+    PYChart3DRenderGroupGenBuffer(&_rgAxesYNagitive);
+    PYChart3DRenderGroupGenBuffer(&_rgAxesZ);
+    PYChart3DRenderGroupGenBuffer(&_rgRulesXY);
+    PYChart3DRenderGroupGenBuffer(&_rgRulesYZ);
+}
+
+- (void)__renderVerticesInRenderGroup:(PYChart3DRenderGroup *)rg withDrawType:(GLenum)objType
+{
+    glBindBuffer(GL_ARRAY_BUFFER, rg->verticesBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rg->indicesBuffer);
+    glVertexAttribPointer(_positionSlot, 3, GL_FLOAT, GL_FALSE, sizeof(PYChart3DVertex), 0);
+    glVertexAttribPointer(_colorSolt, 4, GL_FLOAT, GL_FALSE, sizeof(PYChart3DVertex), (GLvoid *)(sizeof(float) * 3));
+    glDrawElements(objType, rg->indexCount, GL_UNSIGNED_INT, 0);
 }
 
 - (void)render {
+    PYSingletonLock
     if ( !_context ) return;
-    if ( _vertices == NULL ) return;
+    if ( _rgData.vertices == NULL ) return;
     PYColorInfo _ci = [self backgroundColor].colorInfo;
     glClearColor(_ci.red, _ci.green, _ci.blue, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
-
+    
+    // Projection
     float h = 4.0f * self.frame.size.height / self.frame.size.width;
-    PYChartMatrix _mProj;
-    glMatrixFrustum(&_mProj, -2, 2, -h/2, h/2, 4, 15);
+    PYChartMatrix _mProj = PYChartMatrixFrustum(-2, 2, -h / 2, h / 2, 4, 15);
     glUniformMatrix4fv(_projectionUniform, 1, 0, &_mProj.m11);
-
+    
+    // Rotate
     CATransform3D _modelTransform = CATransform3DMakeTranslation(0, 0, -9);
-//    _modelTransform = CATransform3DRotate(_modelTransform, -(M_PI_2 / 3 * 2 + M_PI_4 / 3), 1, 0, 0);
     _modelTransform = CATransform3DRotate(_modelTransform, _currentRotationAroundX, 1, 0, 0);
     _modelTransform = CATransform3DRotate(_modelTransform, _currentRotationAroundZ, 0, 0, 1);
     _modelTransform = CATransform3DTranslate(_modelTransform, 0, 0, -1);
-    PYChartMatrix _mModel;
-    copyCATransform3DtoMatrix(&_modelTransform, &_mModel);
+    PYChartMatrix _mModel = PYChartMartixFromCATransform3D(&_modelTransform);
     glUniformMatrix4fv(_modelViewUniform, 1, 0, &_mModel.m11);
-
+    
     glViewport(0, 0,
                self.frame.size.width * _eaglLayer.contentsScale,
                self.frame.size.height * _eaglLayer.contentsScale);
-
-    glBindBuffer(GL_ARRAY_BUFFER, _verticesBuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(PYChart3DVertex) * _vertixCount, _vertices, GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _indicesBuffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * _indexCount, _indices, GL_STATIC_DRAW);
-    glVertexAttribPointer(_positionSlot, 3, GL_FLOAT, GL_FALSE, sizeof(PYChart3DVertex), 0);
-    glVertexAttribPointer(_colorSolt, 4, GL_FLOAT, GL_FALSE, sizeof(PYChart3DVertex), (GLvoid *)(sizeof(float) * 3));
-    glDrawElements(GL_TRIANGLES, _indexCount, GL_UNSIGNED_INT, 0);
+    
+    // Draw The data
+    [self __renderVerticesInRenderGroup:&_rgData withDrawType:GL_TRIANGLES];
     
     if ( _displayGrid ) {
-        glLineWidth(_eaglLayer.contentsScale * _gridLineWidth);
-        glBindBuffer(GL_ARRAY_BUFFER, _gridVerticesBuffer);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(PYChart3DVertex) * _vertixCount, _gridVertices, GL_STATIC_DRAW);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _gridIndexBuffer);
-        uint32_t _row = (_table.row - 1) * (uint32_t)_expandTimes + 1;
-        uint32_t _col = (_table.column - 1) * (uint32_t)_expandTimes + 1;
-        GLuint *_rowIndex = (GLuint *)malloc(sizeof(GLuint) * (_col - 1) * 2);
-        for ( uint32_t r = 0; r < _row; ++r ) {
-            for ( uint32_t c = 0; c < _col - 1; ++c ) {
-                _rowIndex[2 * c + 0] = r * _col + c;
-                _rowIndex[2 * c + 1] = r * _col + c + 1;
-            }
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * (_col - 1) * 2, _rowIndex, GL_STATIC_DRAW);
-            glVertexAttribPointer(_positionSlot, 3, GL_FLOAT, GL_FALSE, sizeof(PYChart3DVertex), 0);
-            glVertexAttribPointer(_colorSolt, 4, GL_FLOAT, GL_FALSE, sizeof(PYChart3DVertex), (GLvoid *)(sizeof(float) * 3));
-            glDrawElements(GL_LINES, (_col - 1) * 2, GL_UNSIGNED_INT, 0);
-        }
-        free(_rowIndex);
-        
-        GLuint *_colIndex = (GLuint *)malloc(sizeof(GLuint) * (_row - 1) * 2);
-        for ( uint32_t c = 0; c < _col; ++c ) {
-            for ( uint32_t r = 0; r < _row - 1; ++r ) {
-                _colIndex[2 * r + 0] = r * _col + c;
-                _colIndex[2 * r + 1] = (r + 1) * _col + c;
-            }
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * (_row - 1) * 2, _colIndex, GL_STATIC_DRAW);
-            glVertexAttribPointer(_positionSlot, 3, GL_FLOAT, GL_FALSE, sizeof(PYChart3DVertex), 0);
-            glVertexAttribPointer(_colorSolt, 4, GL_FLOAT, GL_FALSE, sizeof(PYChart3DVertex), (GLvoid *)(sizeof(float) * 3));
-            glDrawElements(GL_LINES, (_row - 1) * 2, GL_UNSIGNED_INT, 0);
-        }
-        free(_colIndex);
+        glLineWidth(_eaglLayer.contentsScale * _dataGridLineWidth);
+        [self __renderVerticesInRenderGroup:&_rgDataGrid withDrawType:GL_LINES];
     }
     
     if ( _displayRules ) {
-        glLineWidth(_eaglLayer.contentsScale / 2);
-        glBindBuffer(GL_ARRAY_BUFFER, _gridVerticesBuffer);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(PYChart3DVertex) * PYSurfaceGridRuleCount,
-                     PYRuleVertices, GL_STATIC_DRAW);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _gridIndexBuffer);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * PYSurfaceGridRuleIndexCount,
-                     PYRuleIndices, GL_STATIC_DRAW);
-        glVertexAttribPointer(_positionSlot, 3, GL_FLOAT, GL_FALSE, sizeof(PYChart3DVertex), 0);
-        glVertexAttribPointer(_colorSolt, 4, GL_FLOAT, GL_FALSE, sizeof(PYChart3DVertex), (GLvoid *)(sizeof(float) * 3));
-        glDrawElements(GL_LINES, PYSurfaceGridRuleIndexCount
-                       , GL_UNSIGNED_INT, 0);
-        
-        glLineWidth(_eaglLayer.contentsScale / 2);
-        glBindBuffer(GL_ARRAY_BUFFER, _gridVerticesBuffer);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(PYChart3DVertex) * PYSurfaceGridZRuleCount,
-                     PYZRuleVertices, GL_STATIC_DRAW);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _gridIndexBuffer);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * PYSurfaceGridZRuleIndexCount,
-                     PYZRuleIndices, GL_STATIC_DRAW);
-        glVertexAttribPointer(_positionSlot, 3, GL_FLOAT, GL_FALSE, sizeof(PYChart3DVertex), 0);
-        glVertexAttribPointer(_colorSolt, 4, GL_FLOAT, GL_FALSE, sizeof(PYChart3DVertex), (GLvoid *)(sizeof(float) * 3));
-        glDrawElements(GL_LINES, PYSurfaceGridZRuleIndexCount
-                       , GL_UNSIGNED_INT, 0);
+        glLineWidth(_eaglLayer.contentsScale * _rulesLineWidth);
+        [self __renderVerticesInRenderGroup:&_rgRulesXY withDrawType:GL_LINES];
+        [self __renderVerticesInRenderGroup:&_rgRulesYZ withDrawType:GL_LINES];
     }
     
     if ( _displayAxes ) {
-        glLineWidth(_eaglLayer.contentsScale / 2);
-        glBindBuffer(GL_ARRAY_BUFFER, _gridVerticesBuffer);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(PYChart3DVertex) * (PYAxesDirectionCount * PYAxesArrowLine + 1),
-                     PYAxesVertices, GL_STATIC_DRAW);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _gridIndexBuffer);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * (PYAxesArrowLine * PYAxesDirectionCount * 2),
-                     PYAxesIndices, GL_STATIC_DRAW);
-        glVertexAttribPointer(_positionSlot, 3, GL_FLOAT, GL_FALSE, sizeof(PYChart3DVertex), 0);
-        glVertexAttribPointer(_colorSolt, 4, GL_FLOAT, GL_FALSE, sizeof(PYChart3DVertex), (GLvoid *)(sizeof(float) * 3));
-        glDrawElements(GL_LINES, (PYAxesArrowLine * PYAxesDirectionCount * 2)
-                       , GL_UNSIGNED_INT, 0);
+        glLineWidth(_eaglLayer.contentsScale * _axesLineWidth);
+        [self __renderVerticesInRenderGroup:&_rgAxesX withDrawType:GL_LINES];
+        [self __renderVerticesInRenderGroup:&_rgAxesYPostive withDrawType:GL_LINES];
+        [self __renderVerticesInRenderGroup:&_rgAxesYNagitive withDrawType:GL_LINES];
+        [self __renderVerticesInRenderGroup:&_rgAxesZ withDrawType:GL_LINES];
     }
-
+    
     [_context presentRenderbuffer:GL_RENDERBUFFER];
+    PYSingletonUnLock
 }
 
 - (void)setBackgroundColor:(UIColor *)backgroundColor
@@ -645,9 +461,8 @@ float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
 {
     [super setFrame:frame];
     if ( _context != nil ) {
-        [self resizeBuffer];
+        [self __resizeGLRenderBuffer];
     }
-    PYLog(@"frame has been changed");
 }
 
 - (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer
@@ -682,20 +497,23 @@ float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
     self.allowRotateAroundZ = YES;
     self.allowRotateAroundX = NO;
     _cachedValues = NULL;
-    _vertices = NULL;
-    _indices = NULL;
-    _gridVertices = NULL;
     _currentRotationAroundZ = 0.f;
     _currentRotationAroundX = -(M_PI_2 / 3 * 2 + M_PI_4 / 3);
     
     // Grid
-    _gridLineWidth = 1.5f;
-    _gridLineColor = [UIColor darkGrayColor];
+    _dataGridLineWidth = 1.5f;
+    _dataGridLineColor = [UIColor darkGrayColor];
     _displayGrid = YES;
     
-    // Rule & Axes
+    // Rule
     _displayRules = YES;
+    _rulesLineWidth = 0.5f;
+    _rulesLineColor = [UIColor lightGrayColor];
+    
+    // Axes
     _displayAxes = YES;
+    _axesLineWidth = 1.f;
+    _axesLineColor = [UIColor blackColor];
     
     // Display Mode
     _displayMode = PYChartSurface3DDisplayModeSquare;
@@ -712,19 +530,41 @@ float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
     _eaglLayer.contentsScale = [[UIScreen mainScreen] scale];
     
     [self setBackgroundColor:[UIColor whiteColor]];
-    if ( ![self setupContext] ) return;
+    if ( ![self __setupGLContext] ) return;
     
     // Gen Buffers
     glGenRenderbuffers(1, &_colorRenderBuffer);
     glGenRenderbuffers(1, &_depthRenderBuffer);
     glGenFramebuffers(1, &_frameBuffer);
-
+    
     // Resize and bind buffer
     if ( self.frame.size.width > 0 && self.frame.size.height > 0 ) {
-        [self resizeBuffer];
+        [self __resizeGLRenderBuffer];
     }
-    [self setupVBOs];
-    if ( ![self compileShaders] ) {
+    
+    [self __initAllRenderGroup];
+    // Create all default data
+    _rgAxesX.vertices = PYChartCreateXAxesVerticesWithColor(-3, 3.5, 0, 0, _axesLineColor, &_rgAxesX.vertexCount);
+    _rgAxesX.indices = PYChartCreateXAxesIndicies(&_rgAxesX.indexCount);
+    [self __glUpdateAllDataOfRenderGroup:&_rgAxesX drawMode:GL_STATIC_DRAW];
+    _rgAxesYPostive.vertices = PYChartCreateYAxesVerticesWithColor(0, 3.5, -3, 0, _axesLineColor, &_rgAxesYPostive.vertexCount);
+    _rgAxesYPostive.indices = PYChartCreateYAxesIndicies(&_rgAxesYPostive.indexCount);
+    [self __glUpdateAllDataOfRenderGroup:&_rgAxesYPostive drawMode:GL_STATIC_DRAW];
+    _rgAxesYNagitive.vertices = PYChartCreateYAxesVerticesWithColor(0, -3.5, -3, 0, _axesLineColor, &_rgAxesYNagitive.vertexCount);
+    _rgAxesYNagitive.indices = PYChartCreateYAxesIndicies(&_rgAxesYNagitive.indexCount);
+    [self __glUpdateAllDataOfRenderGroup:&_rgAxesYNagitive drawMode:GL_STATIC_DRAW];
+    _rgAxesZ.vertices = PYChartCreateZAxesVerticesWithColor(0, 3.5, -3, 0, _axesLineColor, &_rgAxesZ.vertexCount);
+    _rgAxesZ.indices = PYChartCreateZAxesIndicies(&_rgAxesZ.indexCount);
+    [self __glUpdateAllDataOfRenderGroup:&_rgAxesZ drawMode:GL_STATIC_DRAW];
+    
+    _rgRulesXY.vertices = PYChartCreateXYRulerVerticesWithColor(-3, 3, 3, -3, 0, 0.5, _rulesLineColor, &_rgRulesXY.vertexCount);
+    _rgRulesXY.indices = PYChartCreateXYRulerIndicies(-3, 3, 3, -3, 0.5, &_rgRulesXY.indexCount);
+    [self __glUpdateAllDataOfRenderGroup:&_rgRulesXY drawMode:GL_STATIC_DRAW];
+    _rgRulesYZ.vertices = PYChartCreateYZRulerVerticesWithColor(-3, 3, 0, 3, -3, 0.5, _rulesLineColor, &_rgRulesYZ.vertexCount);
+    _rgRulesYZ.indices = PYChartCreateYZRulerIndicies(-3, 3, 0, 3, 0.5, &_rgRulesYZ.indexCount);
+    [self __glUpdateAllDataOfRenderGroup:&_rgRulesYZ drawMode:GL_STATIC_DRAW];
+    
+    if ( ![self __compileShader] ) {
         _context = nil;
     };
 }
@@ -732,41 +572,76 @@ float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
 - (void)dealloc
 {
     _context = nil;
+    PYChart3DRenderGroupRelease(&_rgData);
+    PYChart3DRenderGroupRelease(&_rgDataGrid);
+    PYChart3DRenderGroupRelease(&_rgAxesX);
+    PYChart3DRenderGroupRelease(&_rgAxesYPostive);
+    PYChart3DRenderGroupRelease(&_rgAxesYNagitive);
+    PYChart3DRenderGroupRelease(&_rgAxesZ);
+    PYChart3DRenderGroupRelease(&_rgRulesXY);
+    PYChart3DRenderGroupRelease(&_rgRulesYZ);
     if ( _cachedValues ) free(_cachedValues);
-    if ( _vertices ) free(_vertices);
-    if ( _indices ) free(_indices);
-    if ( _gridVertices ) free(_gridVertices);
 }
 
 // Initialize the surface with specified vertices.
 - (void)prepareSurfaceWithVertexTable:(PYChartSurface3DVertexTable)table expandTimes:(NSUInteger)expand
 {
-    if ( _vertices ) free(_vertices);
-    if ( _indices ) free(_indices);
-    if ( _gridVertices ) free(_gridVertices);
+    PYSingletonLock
+    if ( _rgData.vertices ) {
+        free(_rgData.vertices);
+        free(_rgData.indices);
+    }
+    if ( _rgDataGrid.vertices ) {
+        free(_rgDataGrid.vertices);
+        free(_rgDataGrid.indices);
+    }
     _table = table;
     _expandTimes = expand;
     uint32_t _row = (table.row - 1) * (uint32_t)expand + 1;
     uint32_t _col = (table.column - 1) * (uint32_t)expand + 1;
     uint32_t _count = _row * _col;
-    _vertixCount = _count;
-    _vertices = (PYChart3DVertex *)malloc(sizeof(PYChart3DVertex) * _count);
-    _gridVertices = (PYChart3DVertex *)malloc(sizeof(PYChart3DVertex) * _count);
+    _rgData.vertices = (PYChart3DVertex *)malloc(sizeof(PYChart3DVertex) * _count);
+    _rgData.vertexCount = _count;
+    _rgDataGrid.vertices = (PYChart3DVertex *)malloc(sizeof(PYChart3DVertex) * _count);
+    _rgDataGrid.vertexCount = _count;
+    
     // Each Trangle need 3 vertices
     uint32_t _tcount = (_row - 1) * (_col - 1) * 2;
-    _indexCount = _tcount * 3;
-    _indices = (GLuint *)malloc(sizeof(GLuint) * _indexCount);
+    _rgData.indexCount = _tcount * 3;
+    _rgData.indices = (GLuint *)malloc(sizeof(GLuint) * _rgData.indexCount);
     for ( uint32_t r = 0; r < _row - 1; ++r ) {
         for ( uint32_t c = 0; c < _col - 1; ++c ) {
             uint32_t _beginIndex = ((_col - 1) * r + c) * 6;
-            _indices[_beginIndex + 0] = _col * r + c;
-            _indices[_beginIndex + 1] = _col * (r + 1) + c;
-            _indices[_beginIndex + 2] = _col * (r + 1) + (c + 1);
-            _indices[_beginIndex + 3] = _col * (r + 1) + (c + 1);
-            _indices[_beginIndex + 4] = _col * r + (c + 1);
-            _indices[_beginIndex + 5] = _col * r + c;
+            _rgData.indices[_beginIndex + 0] = _col * r + c;
+            _rgData.indices[_beginIndex + 1] = _col * (r + 1) + c;
+            _rgData.indices[_beginIndex + 2] = _col * (r + 1) + (c + 1);
+            _rgData.indices[_beginIndex + 3] = _col * (r + 1) + (c + 1);
+            _rgData.indices[_beginIndex + 4] = _col * r + (c + 1);
+            _rgData.indices[_beginIndex + 5] = _col * r + c;
         }
     }
+    [self __glUpdateIndexDataOfRenderGroup:&_rgData drawMode:GL_DYNAMIC_DRAW];
+    // Create data grid indices
+    // Each row has (col - 1) lines
+    // Each col has (row - 1) lines
+    // All lines is row * (col - 1) + col * (row - 1)
+    _rgDataGrid.indexCount = (_row * (_col - 1) + _col * (_row - 1)) * 2;
+    _rgDataGrid.indices = (GLuint *)malloc(sizeof(GLuint) * _rgDataGrid.indexCount);
+    uint32_t i = 0;
+    for ( uint32_t r = 0; r < _row; ++r ) {
+        for ( uint32_t c = 0; c < _col - 1; ++c ) {
+            PYCHART_SET_INDEX_GROUP(_rgDataGrid.indices, i, (r * _col + c), (r * _col + c + 1));
+            ++i;
+        }
+    }
+    for ( uint32_t c = 0; c < _col; ++c ) {
+        for ( uint32_t r = 0; r < _row - 1; ++r ) {
+            PYCHART_SET_INDEX_GROUP(_rgDataGrid.indices, i, (r * _col + c), ((r + 1) * _col + c));
+            ++i;
+        }
+    }
+    [self __glUpdateIndexDataOfRenderGroup:&_rgDataGrid drawMode:GL_DYNAMIC_DRAW];
+    PYSingletonUnLock
 }
 
 - (void)updateVertexValues:(float *)values
@@ -779,6 +654,7 @@ float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
 // Update the surface with vertex's value in Z, the values should contains table.row * table.column data
 - (void)calculateAllVertexValues:(float *)values
 {
+    PYSingletonLock
     float _maxX = 4.f, _maxY = 4.f, _maxZ = 2.f;
     if ( _zoomMode == PYChartSurface3DZoomSmall ) {
         _maxX *= 0.75;
@@ -817,9 +693,9 @@ float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
         for ( uint32_t r = 0; r < _table.row; ++r ) {
             for ( uint32_t c = 0; c < _table.column; ++c ) {
                 uint32_t _i = r * _table.column + c;
-                _vertices[_i].position[0] = (float)c / ((float)_table.column - 1) * _maxX - _maxX / 2;
-                _vertices[_i].position[1] = -((float)r / ((float)_table.row - 1) * _maxY - _maxY / 2);
-                _vertices[_i].position[2] = values[_i];
+                float _x = (float)c / ((float)_table.column - 1) * _maxX - _maxX / 2;
+                float _y = -((float)r / ((float)_table.row - 1) * _maxY - _maxY / 2);
+                float _value = values[_i];
                 UIColor *_tc = nil;
                 if ( _customizedColor ) {
                     _tc = [self.delegate surface3DChart:self colorForValue:values[_i] / _maxZ * _originMaxV];
@@ -827,59 +703,38 @@ float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
                     _tc = [UIColor whiteColor];
                 }
                 PYColorInfo _ci = _tc.colorInfo;
-                _vertices[_i].color[0] = _ci.red;
-                _vertices[_i].color[1] = _ci.green;
-                _vertices[_i].color[2] = _ci.blue;
-                _vertices[_i].color[3] = _ci.alpha;
+                PYCHART_SET_VERTEX(_rgData.vertices[_i], _x, _y, _value, _ci);
             }
         }
     } else {
         uint32_t _row = (_table.row - 1) * (uint32_t)_expandTimes + 1;
         uint32_t _col = (_table.column - 1) * (uint32_t)_expandTimes + 1;
-        
-        float *_cpos = (float *)malloc(sizeof(float) * _table.row);
-        float *_zval = (float *)malloc(sizeof(float) * _table.row);
-        
-        for ( uint32_t c = 0; c < _col; ++c ) {
-            if ( (c % _expandTimes) > 0 ) continue;
-            for ( uint32_t r = 0; r < _table.row; ++r ) {
-                _cpos[r] = -((float)r / ((float)_table.row - 1) * _maxY - _maxY / 2);
-                _zval[r] = values[r * _table.column + c / _expandTimes];
-            }
-            for ( uint32_t r = 0; r < _row; ++r ) {
-                uint32_t _i = r * _col + c;
-                float _x = (float)c / ((float)_col - 1) * _maxX - _maxX / 2;
-                float _y = -((float)r / ((float)_row - 1) * _maxY - _maxY / 2);
-                float _value = _lagrange(_cpos, _zval, _table.row, _y);
-                UIColor *_tc = nil;
-                if ( _customizedColor ) {
-                    _tc = [self.delegate surface3DChart:self colorForValue:_value / _maxZ * _originMaxV];
-                } else {
-                    _tc = [UIColor whiteColor];
-                }
-                PYColorInfo _ci = _tc.colorInfo;
-                SET_VERTEX_COLOR(_vertices[_i], _ci);
-                
-                if ( _value > _maxValue ) _value = _maxValue + ((_value - _maxValue) / _value) / _maxZ;
-                if ( _value < _minValue ) _value = _minValue - (_minValue - _value) / (_maxValue - _value) / _maxZ;
-                SET_VERTEX_POSITION(_vertices[_i], _x, _y, _value);
-            }
-        }
-        free(_cpos);
-        free(_zval);
-        
-        float *_rpos = (float *)malloc(sizeof(float) * _table.column);
-        _zval = (float *)malloc(sizeof(float) * _table.column);
+        PYChartSurface3DValue _static_values[4];
+        float _distance_buffer[4];
         for ( uint32_t r = 0; r < _row; ++r ) {
-            for ( uint32_t c = 0; c < _table.column; ++c ) {
-                _rpos[c] = (float)c / ((float)_table.column - 1) * _maxX - _maxX / 2;
-                _zval[c] = _vertices[r * _col + c * _expandTimes].position[2];
-            }
             for ( uint32_t c = 0; c < _col; ++c ) {
                 uint32_t _i = r * _col + c;
                 float _x = (float)c / ((float)_col - 1) * _maxX - _maxX / 2;
                 float _y = -((float)r / ((float)_row - 1) * _maxY - _maxY / 2);
-                float _value = _lagrange(_rpos, _zval, _table.column, _x);
+                float _value = 0.f;
+                if ( r % _expandTimes == 0 && c % _expandTimes == 0) {
+                    _value = values[(r / _expandTimes) * _table.column + (c / _expandTimes)];
+                } else {
+                    uint32_t _r = r / (uint32_t)_expandTimes;
+                    if ( _r == _table.row - 1 ) _r -= 1;
+                    uint32_t _c = c / (uint32_t)_expandTimes;
+                    if ( _c == _table.column - 1 ) _c -= 1;
+                    uint32_t _re = _r * (uint32_t)_expandTimes;
+                    uint32_t _ce = _c * (uint32_t)_expandTimes;
+                    uint32_t _r1e = (_r + 1) * (uint32_t)_expandTimes;
+                    uint32_t _c1e = (_c + 1) * (uint32_t)_expandTimes;
+                    _static_values[0] = PYChartSurface3DValueMake(_re, _ce, values[_r * _table.column + _c]);
+                    _static_values[1] = PYChartSurface3DValueMake(_re, _c1e, values[_r * _table.column + _c + 1]);
+                    _static_values[2] = PYChartSurface3DValueMake(_r1e, _ce, values[(_r + 1) * _table.column + _c]);
+                    _static_values[3] = PYChartSurface3DValueMake(_r1e, _c1e, values[(_r + 1) * _table.column + _c + 1]);
+                    
+                    _value = PYChartInterpolationIDW(_static_values, 4, PYChartSurface3DPointMake(r, c), _distance_buffer);
+                }
                 UIColor *_tc = nil;
                 if ( _customizedColor ) {
                     _tc = [self.delegate surface3DChart:self colorForValue:_value / _maxZ * _originMaxV];
@@ -887,25 +742,20 @@ float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
                     _tc = [UIColor whiteColor];
                 }
                 PYColorInfo _ci = _tc.colorInfo;
-                SET_VERTEX_COLOR(_vertices[_i], _ci);
-
-                if ( _value > _maxValue ) _value = _maxValue + ((_value - _maxValue) / _value) / _maxZ;
-                if ( _value < _minValue ) _value = _minValue - (_minValue - _value) / (_maxValue - _value) / _maxZ;
-                SET_VERTEX_POSITION(_vertices[_i], _x, _y, _value);
+                PYCHART_SET_VERTEX(_rgData.vertices[_i], _x, _y, _value, _ci);
             }
         }
-        free(_rpos);
-        free(_zval);
     }
     
-    PYColorInfo _pi = _gridLineColor.colorInfo;
-    for ( uint32_t i = 0; i < _vertixCount; ++i ) {
-        memcpy(_gridVertices[i].position, _vertices[i].position, sizeof(float) * 3);
-        _gridVertices[i].color[0] = _pi.red;
-        _gridVertices[i].color[1] = _pi.green;
-        _gridVertices[i].color[2] = _pi.blue;
-        _gridVertices[i].color[3] = _pi.alpha;
+    PYColorInfo _pi = _dataGridLineColor.colorInfo;
+    for ( uint32_t i = 0; i < _rgData.vertexCount; ++i ) {
+        memcpy(_rgDataGrid.vertices[i].position, _rgData.vertices[i].position, sizeof(float) * 3);
+        PYCHART_SET_VERTEX_COLOR(_rgDataGrid.vertices[i], _pi);
     }
+    
+    [self __glUpdateVertexDataOfRenderGroup:&_rgData drawMode:GL_DYNAMIC_DRAW];
+    [self __glUpdateVertexDataOfRenderGroup:&_rgDataGrid drawMode:GL_DYNAMIC_DRAW];
+    PYSingletonUnLock
     [self render];
 }
 

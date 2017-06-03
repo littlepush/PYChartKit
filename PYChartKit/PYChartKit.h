@@ -44,6 +44,7 @@
 
 #import "PYCurveChart.h"
 #import "PYCycleProgress.h"
+#import "PYChartSurface3DUtility.h"
 #import "PYChartSurface3D.h"
 
 // @littlepush

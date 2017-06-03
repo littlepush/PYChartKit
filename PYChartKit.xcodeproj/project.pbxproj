@@ -10,6 +10,7 @@
 		66A6E20F40E9C7B8D89E537B /* libPods-PYChartKit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9310AE143B2DE35FE348F2F0 /* libPods-PYChartKit.a */; };
 		E66A099D1EB213CD0065E286 /* PYChartKitTest.m in Sources */ = {isa = PBXBuildFile; fileRef = E66A099C1EB213CD0065E286 /* PYChartKitTest.m */; };
 		E66A099F1EB213CD0065E286 /* libPYChartKit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E6E8B9461A7811D800FDF235 /* libPYChartKit.a */; };
+		E6B39F081EE29DD90085D0AF /* PYChartSurface3DUtility.m in Sources */ = {isa = PBXBuildFile; fileRef = E6B39F071EE29DD90085D0AF /* PYChartSurface3DUtility.m */; };
 		E6D7CD6C1ED7638C0020F18A /* PYChartSurface3D.m in Sources */ = {isa = PBXBuildFile; fileRef = E6D7CD6A1ED7638C0020F18A /* PYChartSurface3D.m */; };
 		E6D7CD6E1ED763AC0020F18A /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E6D7CD6D1ED763AC0020F18A /* OpenGLES.framework */; };
 		E6E8B94A1A7811D800FDF235 /* PYChartKit.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = E6E8B9491A7811D800FDF235 /* PYChartKit.h */; };
@@ -50,6 +51,8 @@
 		E66A099A1EB213CD0065E286 /* PYChartKitTest.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PYChartKitTest.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E66A099C1EB213CD0065E286 /* PYChartKitTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PYChartKitTest.m; sourceTree = "<group>"; };
 		E66A099E1EB213CD0065E286 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		E6B39F061EE29DD90085D0AF /* PYChartSurface3DUtility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PYChartSurface3DUtility.h; sourceTree = "<group>"; };
+		E6B39F071EE29DD90085D0AF /* PYChartSurface3DUtility.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PYChartSurface3DUtility.m; sourceTree = "<group>"; };
 		E6D7CD6A1ED7638C0020F18A /* PYChartSurface3D.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PYChartSurface3D.m; sourceTree = "<group>"; };
 		E6D7CD6B1ED7638C0020F18A /* PYChartSurface3D.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PYChartSurface3D.h; sourceTree = "<group>"; };
 		E6D7CD6D1ED763AC0020F18A /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGLES.framework; path = System/Library/Frameworks/OpenGLES.framework; sourceTree = SDKROOT; };
@@ -130,6 +133,8 @@
 		E6E8B9481A7811D800FDF235 /* PYChartKit */ = {
 			isa = PBXGroup;
 			children = (
+				E6B39F061EE29DD90085D0AF /* PYChartSurface3DUtility.h */,
+				E6B39F071EE29DD90085D0AF /* PYChartSurface3DUtility.m */,
 				E6D7CD6A1ED7638C0020F18A /* PYChartSurface3D.m */,
 				E6D7CD6B1ED7638C0020F18A /* PYChartSurface3D.h */,
 				E6E8B9601A7812E600FDF235 /* PYCurveChart.h */,
@@ -334,6 +339,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E6B39F081EE29DD90085D0AF /* PYChartSurface3DUtility.m in Sources */,
 				E6D7CD6C1ED7638C0020F18A /* PYChartSurface3D.m in Sources */,
 				E6E8B9671A7812E600FDF235 /* PYCurveChartLayer.m in Sources */,
 				E6E8B9681A7812E600FDF235 /* PYCycleProgress.m in Sources */,

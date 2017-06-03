@@ -78,8 +78,20 @@ typedef NS_ENUM(NSInteger, PYChartSurface3DZoom) {
 // Show Axes
 @property (nonatomic, assign)   BOOL        displayAxes;
 
+// Axes Line Width
+@property (nonatomic, assign)   CGFloat     axesLineWidth;
+
+// Axes Line Color
+@property (nonatomic, strong)   UIColor     *axesColor;
+
 // Show Grid Rules
 @property (nonatomic, assign)   BOOL        displayRules;
+
+// Rules Line Width
+@property (nonatomic, assign)   CGFloat     rulesLineWidth;
+
+// Rules Line Color
+@property (nonatomic, strong)   UIColor     *rulesColor;
 
 // Display mode, default is square mode
 @property (nonatomic, assign)   PYChartSurface3DDisplayMode displayMode;
