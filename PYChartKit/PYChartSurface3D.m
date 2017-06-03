@@ -65,24 +65,24 @@ NSString * PYChartVertexShadarString;
 NSString * PYChartFragmentShadarString;
 
 /*float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
-{
-    float *_lvalue = (float *)malloc(sizeof(float) * count);
-    float _y = 0.f;
-    for ( uint32_t p = 0; p < count; ++p ) {
-        float _t1 = 1.0, _t2 = 1.0;
-        for ( uint32_t q = 0; q < count; ++q ) {
-            if ( q == p ) continue;
-            _t1 *= (x - _knownX[q]);
-            _t2 *= (_knownX[p] - _knownX[q]);
-        }
-        _lvalue[p] = _t1 / _t2;
-    }
-    for ( uint32_t i = 0; i < count; ++i ) {
-        _y += _knownY[i] * _lvalue[i];
-    }
-    free(_lvalue);
-    return _y;
-}*/
+ {
+ float *_lvalue = (float *)malloc(sizeof(float) * count);
+ float _y = 0.f;
+ for ( uint32_t p = 0; p < count; ++p ) {
+ float _t1 = 1.0, _t2 = 1.0;
+ for ( uint32_t q = 0; q < count; ++q ) {
+ if ( q == p ) continue;
+ _t1 *= (x - _knownX[q]);
+ _t2 *= (_knownX[p] - _knownX[q]);
+ }
+ _lvalue[p] = _t1 / _t2;
+ }
+ for ( uint32_t i = 0; i < count; ++i ) {
+ _y += _knownY[i] * _lvalue[i];
+ }
+ free(_lvalue);
+ return _y;
+ }*/
 
 @interface PYChartSurface3D () <UIGestureRecognizerDelegate>
 {
@@ -92,13 +92,13 @@ NSString * PYChartFragmentShadarString;
     GLuint                          _colorRenderBuffer;
     GLuint                          _depthRenderBuffer;
     GLuint                          _frameBuffer;
-
+    
     // Shader
     GLuint                          _positionSlot;
     GLuint                          _colorSolt;
     GLuint                          _projectionUniform;
     GLuint                          _modelViewUniform;
-
+    
     // Grid Related
     BOOL                            _displayGrid;
     UIColor                         *_dataGridLineColor;
@@ -124,7 +124,7 @@ NSString * PYChartFragmentShadarString;
     float                           *_cachedValues;
     PYChartSurface3DVertexTable     _table;
     NSUInteger                      _expandTimes;
-
+    
     // Buffers
     PYChart3DRenderGroup            _rgData;
     PYChart3DRenderGroup            _rgDataGrid;
@@ -600,9 +600,9 @@ NSString * PYChartFragmentShadarString;
     uint32_t _row = (table.row - 1) * (uint32_t)expand + 1;
     uint32_t _col = (table.column - 1) * (uint32_t)expand + 1;
     uint32_t _count = _row * _col;
-    _rgData.vertices = (PYChart3DVertex *)malloc(sizeof(PYChart3DVertex) * _count);
+    _rgData.vertices = (PYChart3DVertex *)calloc(_count, sizeof(PYChart3DVertex));
     _rgData.vertexCount = _count;
-    _rgDataGrid.vertices = (PYChart3DVertex *)malloc(sizeof(PYChart3DVertex) * _count);
+    _rgDataGrid.vertices = (PYChart3DVertex *)calloc(_count, sizeof(PYChart3DVertex));
     _rgDataGrid.vertexCount = _count;
     
     // Each Trangle need 3 vertices
@@ -620,7 +620,6 @@ NSString * PYChartFragmentShadarString;
             _rgData.indices[_beginIndex + 5] = _col * r + c;
         }
     }
-    [self __glUpdateIndexDataOfRenderGroup:&_rgData drawMode:GL_DYNAMIC_DRAW];
     // Create data grid indices
     // Each row has (col - 1) lines
     // Each col has (row - 1) lines
@@ -640,7 +639,8 @@ NSString * PYChartFragmentShadarString;
             ++i;
         }
     }
-    [self __glUpdateIndexDataOfRenderGroup:&_rgDataGrid drawMode:GL_DYNAMIC_DRAW];
+    [self __glUpdateAllDataOfRenderGroup:&_rgData drawMode:GL_DYNAMIC_DRAW];
+    [self __glUpdateAllDataOfRenderGroup:&_rgDataGrid drawMode:GL_DYNAMIC_DRAW];
     PYSingletonUnLock
 }
 
