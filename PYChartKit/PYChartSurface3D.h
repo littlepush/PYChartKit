@@ -41,6 +41,7 @@
  */
 
 #import <PYControllers/PYControllers.h>
+#import "PYChartSurface3DUtility.h"
 
 typedef struct {
     uint32_t        row;
@@ -110,6 +111,10 @@ typedef NS_ENUM(NSInteger, PYChartSurface3DZoom) {
 
 // Update the surface with vertex's value in Z, the values should contains table.row * table.column data
 - (void)updateVertexValues:(float *)values;
+
+- (void)addRenderGroupObject:(PYChart3DRenderGroup)renderGroup forKey:(NSString *)key;
+
+- (void)removeRenderGroupForKey:(NSString *)key;
 
 @end
 

@@ -84,6 +84,24 @@ NSString * PYChartFragmentShadarString;
  return _y;
  }*/
 
+@interface PYChart3DRenderGroupObject : NSObject
+{
+    PYChart3DRenderGroup                _rg;
+}
++ (instancetype)objectWithRenderGroup:(PYChart3DRenderGroup)renderGroup;
+@property (nonatomic, readonly) PYChart3DRenderGroup renderGroup;
+@end
+
+@implementation PYChart3DRenderGroupObject
+@synthesize renderGroup = _rg;
++ (instancetype)objectWithRenderGroup:(PYChart3DRenderGroup)renderGroup
+{
+    PYChart3DRenderGroupObject *_rgo = [PYChart3DRenderGroupObject object];
+    _rgo->_rg = renderGroup;
+    return _rgo;
+}
+@end
+
 @interface PYChartSurface3D () <UIGestureRecognizerDelegate>
 {
     // Open GL
@@ -140,6 +158,8 @@ NSString * PYChartFragmentShadarString;
     PYChart3DRenderGroup            _rgRulesXY;
     // YZ
     PYChart3DRenderGroup            _rgRulesYZ;
+    
+    NSMutableDictionary             *_expendObjects;
 }
 
 @end
@@ -404,7 +424,7 @@ NSString * PYChartFragmentShadarString;
     
     // Projection
     float h = 4.0f * self.frame.size.height / self.frame.size.width;
-    PYChartMatrix _mProj = PYChartMatrixFrustum(-2, 2, -h / 2, h / 2, 4, 15);
+    PYChartMatrix4 _mProj = PYChartMatrixFrustum(-2, 2, -h / 2, h / 2, 4, 15);
     glUniformMatrix4fv(_projectionUniform, 1, 0, &_mProj.m11);
     
     // Rotate
@@ -412,7 +432,7 @@ NSString * PYChartFragmentShadarString;
     _modelTransform = CATransform3DRotate(_modelTransform, _currentRotationAroundX, 1, 0, 0);
     _modelTransform = CATransform3DRotate(_modelTransform, _currentRotationAroundZ, 0, 0, 1);
     _modelTransform = CATransform3DTranslate(_modelTransform, 0, 0, -1);
-    PYChartMatrix _mModel = PYChartMartixFromCATransform3D(&_modelTransform);
+    PYChartMatrix4 _mModel = PYChartMartixFromCATransform3D(_modelTransform);
     glUniformMatrix4fv(_modelViewUniform, 1, 0, &_mModel.m11);
     
     glViewport(0, 0,
@@ -439,6 +459,12 @@ NSString * PYChartFragmentShadarString;
         [self __renderVerticesInRenderGroup:&_rgAxesYPostive withDrawType:GL_LINES];
         [self __renderVerticesInRenderGroup:&_rgAxesYNagitive withDrawType:GL_LINES];
         [self __renderVerticesInRenderGroup:&_rgAxesZ withDrawType:GL_LINES];
+    }
+    
+    for ( NSString *_key in _expendObjects ) {
+        PYChart3DRenderGroupObject *_rgo = [_expendObjects objectForKey:_key];
+        PYChart3DRenderGroup _rg = _rgo.renderGroup;
+        [self __renderVerticesInRenderGroup:&_rg withDrawType:GL_TRIANGLES];
     }
     
     [_context presentRenderbuffer:GL_RENDERBUFFER];
@@ -518,6 +544,8 @@ NSString * PYChartFragmentShadarString;
     // Display Mode
     _displayMode = PYChartSurface3DDisplayModeSquare;
     _zoomMode = PYChartSurface3DZoomNormal;
+    
+    _expendObjects = [NSMutableDictionary dictionary];
     
     UIPanGestureRecognizer *_pg = [[UIPanGestureRecognizer alloc]
                                    initWithTarget:self
@@ -749,7 +777,7 @@ NSString * PYChartFragmentShadarString;
     
     PYColorInfo _pi = _dataGridLineColor.colorInfo;
     for ( uint32_t i = 0; i < _rgData.vertexCount; ++i ) {
-        memcpy(_rgDataGrid.vertices[i].position, _rgData.vertices[i].position, sizeof(float) * 3);
+        _rgDataGrid.vertices[i].position = _rgData.vertices[i].position;
         PYCHART_SET_VERTEX_COLOR(_rgDataGrid.vertices[i], _pi);
     }
     
@@ -757,6 +785,37 @@ NSString * PYChartFragmentShadarString;
     [self __glUpdateVertexDataOfRenderGroup:&_rgDataGrid drawMode:GL_DYNAMIC_DRAW];
     PYSingletonUnLock
     [self render];
+}
+
+- (void)addRenderGroupObject:(PYChart3DRenderGroup)renderGroup forKey:(NSString *)key
+{
+    PYSingletonLock
+    if ( renderGroup.vertices == NULL ) return;
+    [self removeRenderGroupForKey:key];
+    
+    PYChart3DRenderGroup _rg;
+    PYChart3DRenderGroupGenBuffer(&_rg);
+    _rg.vertices = renderGroup.vertices;
+    _rg.vertexCount = renderGroup.vertexCount;
+    _rg.indices = renderGroup.indices;
+    _rg.indexCount = renderGroup.indexCount;
+    [self __glUpdateAllDataOfRenderGroup:&_rg drawMode:GL_STATIC_DRAW];
+    PYChart3DRenderGroupObject *_rgo = [PYChart3DRenderGroupObject objectWithRenderGroup:_rg];
+    
+    [_expendObjects setObject:_rgo forKey:key];
+    [self render];
+    PYSingletonUnLock
+}
+
+- (void)removeRenderGroupForKey:(NSString *)key
+{
+    PYChart3DRenderGroupObject *_oldObjValue = [_expendObjects objectForKey:key];
+    if ( _oldObjValue != nil ) {
+        // Remove the old object
+        PYChart3DRenderGroup _rg = _oldObjValue.renderGroup;
+        PYChart3DRenderGroupRelease(&_rg);
+        [_expendObjects removeObjectForKey:key];
+    }
 }
 
 @end
