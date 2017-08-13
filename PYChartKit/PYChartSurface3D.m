@@ -609,6 +609,14 @@ NSString * PYChartFragmentShadarString;
     PYChart3DRenderGroupRelease(&_rgRulesXY);
     PYChart3DRenderGroupRelease(&_rgRulesYZ);
     if ( _cachedValues ) free(_cachedValues);
+    
+    //_expendObjects
+    for ( NSString *_key in _expendObjects ) {
+        PYChart3DRenderGroupObject *_rgobj = [_expendObjects objectForKey:_key];
+        PYChart3DRenderGroup _rg = _rgobj.renderGroup;
+        PYChart3DRenderGroupRelease(&_rg);
+    }
+    [_expendObjects removeAllObjects];
 }
 
 // Initialize the surface with specified vertices.
