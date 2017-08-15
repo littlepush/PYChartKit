@@ -120,6 +120,10 @@ typedef NS_ENUM(NSInteger, PYChartSurface3DZoom) {
 
 - (PYChart3DRenderGroup *)renderGroupForKey:(NSString *)key;
 
+- (NSArray *)queryRowDataNear:(CGFloat)rowPoint;
+
+- (NSArray *)queryColumnDataNear:(CGFloat)columnPoint;
+
 @end
 
 @protocol PYChartSurface3DDelegate <NSObject>

@@ -225,12 +225,22 @@ UIImage* PYChart3DCreateImageFromTextWithBounds(NSString *text, UIColor *color, 
     size_t width = bounds.width;
     size_t height = bounds.height;
     
-    UIGraphicsBeginImageContextWithOptions(CGSizeMake(width, height), NO, [UIScreen mainScreen].scale);
+    float _scale = [UIScreen mainScreen].scale;
+    UIGraphicsBeginImageContextWithOptions(CGSizeMake(width, height), NO, _scale);
+    
+    CGContextRef _ctx = UIGraphicsGetCurrentContext();
+    CGContextSetFillColorWithColor(_ctx, [UIColor whiteColor].CGColor);
+    CGContextFillRect(_ctx, CGRectMake(0, 0, width * _scale, height * _scale));
+    
+    NSDictionary *_textDrawingOptions = @{
+                                          NSFontAttributeName: [UIFont systemFontOfSize:bounds.height * 0.9],
+                                          NSForegroundColorAttributeName: color};
+    CGSize _s = [text sizeWithAttributes:_textDrawingOptions];
     [text
-     drawInRect:CGRectMake(0, 0, bounds.width, bounds.height)
-     withAttributes:@{NSFontAttributeName: [UIFont systemFontOfSize:bounds.height * 0.95],
-                      NSForegroundColorAttributeName: color,
-                      NSBackgroundColorAttributeName: [UIColor clearColor]}];
+     drawInRect:CGRectMake((bounds.width - _s.width) / 2,
+                           (bounds.height - _s.height) / 2,
+                           bounds.width, bounds.height)
+     withAttributes:_textDrawingOptions];
     UIImage *_result = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
     

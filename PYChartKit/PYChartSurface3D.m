@@ -870,6 +870,83 @@ UIImage *PYChartDefaultTextureImage;
     if ( _rgo == nil ) return NULL;
     return _rgo.innerRenderGroup;
 }
+
+- (NSArray *)queryRowDataNear:(CGFloat)rowPoint
+{
+    NSMutableArray *_data = [NSMutableArray array];
+    
+    if ( _cachedValues == NULL ) {
+        for ( uint32_t i = 0; i < _table.column; ++i ) {
+            [_data addObject:@(0)];
+        }
+    } else {
+        float _maxY = 4.f;
+        if ( _zoomMode == PYChartSurface3DZoomSmall ) {
+            _maxY *= 0.75;
+        } else if ( _zoomMode == PYChartSurface3DZoomBig ) {
+            _maxY *= 1.25;
+        }
+        if ( _displayMode == PYChartSurface3DDisplayModeRelated ) {
+            if ( _table.row >= _table.column ) {
+                _maxY = ((float)_table.column / (float)_table.row) * _maxY;
+            }
+        }
+        float _minY = -(_maxY / 2);
+        float _percentage = (rowPoint - _minY) / _maxY;
+        uint32_t _row = _table.row * _percentage;
+        if ( _row == _table.row ) _row -= 1;
+        
+        for ( uint32_t i = 0; i < _table.column; ++i ) {
+            float _v = _cachedValues[_row * _table.column + i];
+            if (isnan(_v)) {
+                [_data addObject:@(0)];
+            } else {
+                [_data addObject:@(_v)];
+            }
+        }
+    }
+    
+    return _data;
+}
+
+- (NSArray *)queryColumnDataNear:(CGFloat)columnPoint
+{
+    NSMutableArray *_data = [NSMutableArray array];
+    
+    if ( _cachedValues == NULL ) {
+        for ( uint32_t i = 0; i < _table.row; ++i ) {
+            [_data addObject:@(0)];
+        }
+    } else {
+        float _maxX = 4.f;
+        if ( _zoomMode == PYChartSurface3DZoomSmall ) {
+            _maxX *= 0.75;
+        } else if ( _zoomMode == PYChartSurface3DZoomBig ) {
+            _maxX *= 1.25;
+        }
+        if ( _displayMode == PYChartSurface3DDisplayModeRelated ) {
+            if ( _table.row <= _table.column ) {
+                _maxX = ((float)_table.row / (float)_table.column) * _maxX;
+            }
+        }
+        float _minX = -(_maxX / 2);
+        float _percentage = (columnPoint - _minX) / _maxX;
+        uint32_t _col = _table.column * _percentage;
+        if ( _col == _table.column ) _col -= 1;
+        
+        for ( uint32_t i = 0; i < _table.row; ++i ) {
+            float _v = _cachedValues[i * _table.column + _col];
+            if (isnan(_v)) {
+                [_data addObject:@(0)];
+            } else {
+                [_data addObject:@(_v)];
+            }
+        }
+    }
+    
+    return _data;
+}
+
 @end
 
 // @littlepush
