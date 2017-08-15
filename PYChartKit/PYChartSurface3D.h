@@ -116,6 +116,10 @@ typedef NS_ENUM(NSInteger, PYChartSurface3DZoom) {
 
 - (void)removeRenderGroupForKey:(NSString *)key;
 
+- (void)setTransform:(CATransform3D)transform ofRenderGroupForKey:(NSString *)key;
+
+- (PYChart3DRenderGroup *)renderGroupForKey:(NSString *)key;
+
 @end
 
 @protocol PYChartSurface3DDelegate <NSObject>

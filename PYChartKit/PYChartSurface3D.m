@@ -44,25 +44,9 @@
 #import <PYCore/PYCore.h>
 #import "PYChartSurface3DUtility.h"
 
-/*
- attribute vec4 Position;
- attribute vec4 SourceColor;
- varying vec4 DestinationColor;
- uniform mat4 Projection;
- uniform mat4 Modelview;
- void main(void) {
- DestinationColor = SourceColor;
- gl_Position = Projection * Modelview * Position;
- }
- */
 NSString * PYChartVertexShadarString;
-/*
- varying lowp vec4 DestinationColor;
- void main(void) {
- gl_FragColor = DestinationColor;
- }
- */
 NSString * PYChartFragmentShadarString;
+UIImage *PYChartDefaultTextureImage;
 
 /*float _lagrange(float* _knownX, float* _knownY, uint32_t count, float x)
  {
@@ -90,10 +74,13 @@ NSString * PYChartFragmentShadarString;
 }
 + (instancetype)objectWithRenderGroup:(PYChart3DRenderGroup)renderGroup;
 @property (nonatomic, readonly) PYChart3DRenderGroup renderGroup;
+@property (nonatomic, readonly) PYChart3DRenderGroup *innerRenderGroup;
 @end
 
 @implementation PYChart3DRenderGroupObject
 @synthesize renderGroup = _rg;
+@dynamic innerRenderGroup;
+- (PYChart3DRenderGroup *)innerRenderGroup { return &_rg; }
 + (instancetype)objectWithRenderGroup:(PYChart3DRenderGroup)renderGroup
 {
     PYChart3DRenderGroupObject *_rgo = [PYChart3DRenderGroupObject object];
@@ -116,6 +103,10 @@ NSString * PYChartFragmentShadarString;
     GLuint                          _colorSolt;
     GLuint                          _projectionUniform;
     GLuint                          _modelViewUniform;
+    
+    GLuint                          _defaultTexture;
+    GLuint                          _textureUniform;
+    GLuint                          _texCoordSlot;
     
     // Grid Related
     BOOL                            _displayGrid;
@@ -288,21 +279,28 @@ NSString * PYChartFragmentShadarString;
 
 + (void)initialize
 {
-    PYChartVertexShadarString = [NSString stringWithFormat:@"%@;\n%@;\n%@;\n%@;\n%@;\n%@\n%@;\n%@;\n%@",
-                                 @"attribute vec4 _pos",
-                                 @"attribute vec4 _srcClr",
-                                 @"varying vec4 _destClr",
-                                 @"uniform mat4 _projection",
-                                 @"uniform mat4 _modelView",
-                                 @"void main(void) {",
-                                 @"_destClr = _srcClr",
-                                 @"gl_Position = _projection * _modelView * _pos",
-                                 @"}"];
-    PYChartFragmentShadarString = [NSString stringWithFormat:@"%@;\n%@\n%@;\n%@",
-                                   @"varying lowp vec4 _destClr",
-                                   @"void main(void) {",
-                                   @"gl_FragColor = _destClr",
-                                   @"}"];
+    PYChartVertexShadarString =
+    @"attribute vec4 _pos;"                             \
+    @"attribute vec4 _srcClr;"                          \
+    @"varying vec4 _destClr;"                           \
+    @"uniform mat4 _projection;"                        \
+    @"uniform mat4 _modelView;"                         \
+    @"attribute vec2 _texCoordIn;"                      \
+    @"varying vec2 _texCoordOut;"                       \
+    @"void main(void) {"                                \
+    @"  _destClr = _srcClr;"                            \
+    @"  _texCoordOut = _texCoordIn;"                    \
+    @"  gl_Position = _projection * _modelView * _pos;" \
+    @"}";
+    PYChartFragmentShadarString =
+    @"varying lowp vec4 _destClr;"                      \
+    @"varying lowp vec2 _texCoordOut;"                  \
+    @"uniform sampler2D _texture;"                      \
+    @"void main(void) {"                                \
+    @"  gl_FragColor = _destClr * texture2D(_texture, _texCoordOut); "  \
+    @"}";
+    
+    PYChartDefaultTextureImage = [UIImage imageWithOptionString:@"v(1)$#FFFFFF/0:#FFFFFF/1"];
 }
 
 + (Class)layerClass { return [CAEAGLLayer class]; }
@@ -388,28 +386,33 @@ NSString * PYChartFragmentShadarString;
     _colorSolt = glGetAttribLocation(_programHandle, "_srcClr");
     _projectionUniform = glGetUniformLocation(_programHandle, "_projection");
     _modelViewUniform = glGetUniformLocation(_programHandle, "_modelView");
+    _texCoordSlot = glGetAttribLocation(_programHandle, "_texCoordIn");
+    _textureUniform = glGetUniformLocation(_programHandle, "_texture");
     glEnableVertexAttribArray(_positionSlot);
     glEnableVertexAttribArray(_colorSolt);
+    glEnableVertexAttribArray(_texCoordSlot);
     return YES;
-}
-
-- (void)__initAllRenderGroup {
-    PYChart3DRenderGroupGenBuffer(&_rgData);
-    PYChart3DRenderGroupGenBuffer(&_rgDataGrid);
-    PYChart3DRenderGroupGenBuffer(&_rgAxesX);
-    PYChart3DRenderGroupGenBuffer(&_rgAxesYPostive);
-    PYChart3DRenderGroupGenBuffer(&_rgAxesYNagitive);
-    PYChart3DRenderGroupGenBuffer(&_rgAxesZ);
-    PYChart3DRenderGroupGenBuffer(&_rgRulesXY);
-    PYChart3DRenderGroupGenBuffer(&_rgRulesYZ);
 }
 
 - (void)__renderVerticesInRenderGroup:(PYChart3DRenderGroup *)rg withDrawType:(GLenum)objType
 {
     glBindBuffer(GL_ARRAY_BUFFER, rg->verticesBuffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rg->indicesBuffer);
+    
     glVertexAttribPointer(_positionSlot, 3, GL_FLOAT, GL_FALSE, sizeof(PYChart3DVertex), 0);
     glVertexAttribPointer(_colorSolt, 4, GL_FLOAT, GL_FALSE, sizeof(PYChart3DVertex), (GLvoid *)(sizeof(float) * 3));
+    glVertexAttribPointer(_texCoordSlot, 2, GL_FLOAT, GL_FALSE,
+                          sizeof(PYChart3DVertex),
+                          (GLvoid *)(sizeof(float) * 7));
+    
+    glActiveTexture(GL_TEXTURE0);
+    if ( rg->textureName != (GLuint)-1 ) {
+        glBindTexture(GL_TEXTURE_2D, rg->textureName);
+    } else {
+        glBindTexture(GL_TEXTURE_2D, _defaultTexture);
+    }
+    glUniform1i(_textureUniform, 0);
+    
     glDrawElements(objType, rg->indexCount, GL_UNSIGNED_INT, 0);
 }
 
@@ -417,6 +420,9 @@ NSString * PYChartFragmentShadarString;
     PYSingletonLock
     if ( !_context ) return;
     if ( _rgData.vertices == NULL ) return;
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    
     PYColorInfo _ci = [self backgroundColor].colorInfo;
     glClearColor(_ci.red, _ci.green, _ci.blue, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -432,7 +438,7 @@ NSString * PYChartFragmentShadarString;
     _modelTransform = CATransform3DRotate(_modelTransform, _currentRotationAroundX, 1, 0, 0);
     _modelTransform = CATransform3DRotate(_modelTransform, _currentRotationAroundZ, 0, 0, 1);
     _modelTransform = CATransform3DTranslate(_modelTransform, 0, 0, -1);
-    PYChartMatrix4 _mModel = PYChartMartixFromCATransform3D(_modelTransform);
+    PYChartMatrix4 _mModel = PYChartMatrixFromCATransform3D(_modelTransform);
     glUniformMatrix4fv(_modelViewUniform, 1, 0, &_mModel.m11);
     
     glViewport(0, 0,
@@ -460,6 +466,7 @@ NSString * PYChartFragmentShadarString;
         [self __renderVerticesInRenderGroup:&_rgAxesYNagitive withDrawType:GL_LINES];
         [self __renderVerticesInRenderGroup:&_rgAxesZ withDrawType:GL_LINES];
     }
+    
     
     for ( NSString *_key in _expendObjects ) {
         PYChart3DRenderGroupObject *_rgo = [_expendObjects objectForKey:_key];
@@ -560,6 +567,9 @@ NSString * PYChartFragmentShadarString;
     [self setBackgroundColor:[UIColor whiteColor]];
     if ( ![self __setupGLContext] ) return;
     
+    // Load default texture
+    _defaultTexture = PYChart3DCreateTextureFromImage(PYChartDefaultTextureImage.CGImage);
+    
     // Gen Buffers
     glGenRenderbuffers(1, &_colorRenderBuffer);
     glGenRenderbuffers(1, &_depthRenderBuffer);
@@ -570,27 +580,51 @@ NSString * PYChartFragmentShadarString;
         [self __resizeGLRenderBuffer];
     }
     
-    [self __initAllRenderGroup];
     // Create all default data
-    _rgAxesX.vertices = PYChartCreateXAxesVerticesWithColor(-3, 3.5, 0, 0, _axesLineColor, &_rgAxesX.vertexCount);
-    _rgAxesX.indices = PYChartCreateXAxesIndicies(&_rgAxesX.indexCount);
+    //_rgAxesX = PYChartCreateXAxes(-3, 3.5, 0, 0, _axesLineColor);
+    _rgAxesX = PYChartCreateArrowLine(
+                                      PYChart3DVertex3Make(-3, 0, 0),
+                                      PYChart3DVertex3Make(3.5, 0, 0),
+                                      _axesLineColor);
     [self __glUpdateAllDataOfRenderGroup:&_rgAxesX drawMode:GL_STATIC_DRAW];
-    _rgAxesYPostive.vertices = PYChartCreateYAxesVerticesWithColor(0, 3.5, -3, 0, _axesLineColor, &_rgAxesYPostive.vertexCount);
-    _rgAxesYPostive.indices = PYChartCreateYAxesIndicies(&_rgAxesYPostive.indexCount);
+    //_rgAxesYPostive = PYChartCreateYAxes(0, 3.5, -3, 0, _axesLineColor);
+    _rgAxesYPostive = PYChartCreateArrowLine(
+                                             PYChart3DVertex3Make(-3, 0, 0),
+                                             PYChart3DVertex3Make(-3, 3.5, 0),
+                                             _axesLineColor);
     [self __glUpdateAllDataOfRenderGroup:&_rgAxesYPostive drawMode:GL_STATIC_DRAW];
-    _rgAxesYNagitive.vertices = PYChartCreateYAxesVerticesWithColor(0, -3.5, -3, 0, _axesLineColor, &_rgAxesYNagitive.vertexCount);
-    _rgAxesYNagitive.indices = PYChartCreateYAxesIndicies(&_rgAxesYNagitive.indexCount);
+    //_rgAxesYNagitive = PYChartCreateYAxes(0, -3.5, -3, 0, _axesLineColor);
+    _rgAxesYNagitive = PYChartCreateArrowLine(
+                                              PYChart3DVertex3Make(-3, 0, 0),
+                                              PYChart3DVertex3Make(-3, -3.5, 0),
+                                              _axesLineColor);
     [self __glUpdateAllDataOfRenderGroup:&_rgAxesYNagitive drawMode:GL_STATIC_DRAW];
-    _rgAxesZ.vertices = PYChartCreateZAxesVerticesWithColor(0, 3.5, -3, 0, _axesLineColor, &_rgAxesZ.vertexCount);
-    _rgAxesZ.indices = PYChartCreateZAxesIndicies(&_rgAxesZ.indexCount);
+    //    _rgAxesZ = PYChartCreateZAxes(0, 3.5, -3, 0, _axesLineColor);
+    _rgAxesZ = PYChartCreateArrowLine(
+                                      PYChart3DVertex3Make(-3, 0, 0),
+                                      PYChart3DVertex3Make(-3, 0, 3.5),
+                                      _axesLineColor);
     [self __glUpdateAllDataOfRenderGroup:&_rgAxesZ drawMode:GL_STATIC_DRAW];
     
-    _rgRulesXY.vertices = PYChartCreateXYRulerVerticesWithColor(-3, 3, 3, -3, 0, 0.5, _rulesLineColor, &_rgRulesXY.vertexCount);
-    _rgRulesXY.indices = PYChartCreateXYRulerIndicies(-3, 3, 3, -3, 0.5, &_rgRulesXY.indexCount);
+    //    PYChart3DRenderGroupGenBuffer(&_rgRulesXY);
+    //    PYChart3DRenderGroupGenBuffer(&_rgRulesYZ);
+    _rgRulesXY = PYChartCreateRuler(
+                                    PYChart3DVertex3Make(-3, 3, 0),
+                                    PYChart3DVertex3Make(3, 3, 0),
+                                    PYChart3DVertex3Make(-3, -3, 0),
+                                    PYChart3DVertex3Make(3, -3, 0),
+                                    13, 13, _rulesLineColor);
     [self __glUpdateAllDataOfRenderGroup:&_rgRulesXY drawMode:GL_STATIC_DRAW];
-    _rgRulesYZ.vertices = PYChartCreateYZRulerVerticesWithColor(-3, 3, 0, 3, -3, 0.5, _rulesLineColor, &_rgRulesYZ.vertexCount);
-    _rgRulesYZ.indices = PYChartCreateYZRulerIndicies(-3, 3, 0, 3, 0.5, &_rgRulesYZ.indexCount);
+    _rgRulesYZ = PYChartCreateRuler(
+                                    PYChart3DVertex3Make(-3, -3, 3),
+                                    PYChart3DVertex3Make(-3, 3, 3),
+                                    PYChart3DVertex3Make(-3, -3, 0),
+                                    PYChart3DVertex3Make(-3, 3, 0),
+                                    13, 7, _rulesLineColor);
     [self __glUpdateAllDataOfRenderGroup:&_rgRulesYZ drawMode:GL_STATIC_DRAW];
+    
+    PYChart3DRenderGroupGenBuffer(&_rgData);
+    PYChart3DRenderGroupGenBuffer(&_rgDataGrid);
     
     if ( ![self __compileShader] ) {
         _context = nil;
@@ -609,14 +643,10 @@ NSString * PYChartFragmentShadarString;
     PYChart3DRenderGroupRelease(&_rgRulesXY);
     PYChart3DRenderGroupRelease(&_rgRulesYZ);
     if ( _cachedValues ) free(_cachedValues);
-    
-    //_expendObjects
-    for ( NSString *_key in _expendObjects ) {
-        PYChart3DRenderGroupObject *_rgobj = [_expendObjects objectForKey:_key];
-        PYChart3DRenderGroup _rg = _rgobj.renderGroup;
-        PYChart3DRenderGroupRelease(&_rg);
+    NSArray *_keys = [_expendObjects.allKeys copy];
+    for ( NSString *_key in _keys ) {
+        [self removeRenderGroupForKey:_key];
     }
-    [_expendObjects removeAllObjects];
 }
 
 // Initialize the surface with specified vertices.
@@ -801,14 +831,8 @@ NSString * PYChartFragmentShadarString;
     if ( renderGroup.vertices == NULL ) return;
     [self removeRenderGroupForKey:key];
     
-    PYChart3DRenderGroup _rg;
-    PYChart3DRenderGroupGenBuffer(&_rg);
-    _rg.vertices = renderGroup.vertices;
-    _rg.vertexCount = renderGroup.vertexCount;
-    _rg.indices = renderGroup.indices;
-    _rg.indexCount = renderGroup.indexCount;
-    [self __glUpdateAllDataOfRenderGroup:&_rg drawMode:GL_STATIC_DRAW];
-    PYChart3DRenderGroupObject *_rgo = [PYChart3DRenderGroupObject objectWithRenderGroup:_rg];
+    [self __glUpdateAllDataOfRenderGroup:&renderGroup drawMode:GL_STATIC_DRAW];
+    PYChart3DRenderGroupObject *_rgo = [PYChart3DRenderGroupObject objectWithRenderGroup:renderGroup];
     
     [_expendObjects setObject:_rgo forKey:key];
     [self render];
@@ -826,6 +850,26 @@ NSString * PYChartFragmentShadarString;
     }
 }
 
+- (void)setTransform:(CATransform3D)transform ofRenderGroupForKey:(NSString *)key
+{
+    PYChart3DRenderGroupObject *_rgo = [_expendObjects objectForKey:key];
+    if ( _rgo == nil ) return;
+    PYChartMatrix4 m = PYChartMatrixFromCATransform3D(transform);
+    for ( uint32_t i = 0; i < _rgo.renderGroup.vertexCount; ++i ) {
+        _rgo.renderGroup.vertices[i].position = \
+        PYChartTransformPointWithMatrix4(_rgo.renderGroup.vertices[i].position, m);
+    }
+    PYChart3DRenderGroup _rg = _rgo.renderGroup;
+    [self __glUpdateVertexDataOfRenderGroup:&_rg drawMode:GL_DYNAMIC_DRAW];
+    [self render];
+}
+
+- (PYChart3DRenderGroup *)renderGroupForKey:(NSString *)key
+{
+    PYChart3DRenderGroupObject *_rgo = [_expendObjects objectForKey:key];
+    if ( _rgo == nil ) return NULL;
+    return _rgo.innerRenderGroup;
+}
 @end
 
 // @littlepush
