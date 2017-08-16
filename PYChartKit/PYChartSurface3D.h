@@ -112,16 +112,22 @@ typedef NS_ENUM(NSInteger, PYChartSurface3DZoom) {
 // Update the surface with vertex's value in Z, the values should contains table.row * table.column data
 - (void)updateVertexValues:(float *)values;
 
+// Add a 3D object to the chart.
 - (void)addRenderGroupObject:(PYChart3DRenderGroup)renderGroup forKey:(NSString *)key;
 
+// Remove the object from the chart
 - (void)removeRenderGroupForKey:(NSString *)key;
 
+// Make a transform to the object specified by the key.
 - (void)setTransform:(CATransform3D)transform ofRenderGroupForKey:(NSString *)key;
 
+// Get the point of the inner render group.
 - (PYChart3DRenderGroup *)renderGroupForKey:(NSString *)key;
 
+// Query the nearest row's data of given row point.
 - (NSArray *)queryRowDataNear:(CGFloat)rowPoint;
 
+// Query the nearest column's data of given column point.
 - (NSArray *)queryColumnDataNear:(CGFloat)columnPoint;
 
 @end
