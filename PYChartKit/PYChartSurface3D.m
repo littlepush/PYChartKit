@@ -166,12 +166,14 @@ UIImage *PYChartDefaultTextureImage;
 }
 - (void)__glUpdateVertexDataOfRenderGroup:(PYChart3DRenderGroup *)rg drawMode:(GLenum)mode
 {
+    [EAGLContext setCurrentContext:_context];
     glBindBuffer(GL_ARRAY_BUFFER, rg->verticesBuffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(PYChart3DVertex) * rg->vertexCount,
                  rg->vertices, mode);
 }
 - (void)__glUpdateIndexDataOfRenderGroup:(PYChart3DRenderGroup *)rg drawMode:(GLenum)mode
 {
+    [EAGLContext setCurrentContext:_context];
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rg->indicesBuffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * rg->indexCount,
                  rg->indices, mode);
@@ -343,6 +345,7 @@ UIImage *PYChartDefaultTextureImage;
 }
 
 - (void)__resizeGLRenderBuffer {
+    [EAGLContext setCurrentContext:_context];
     glBindRenderbuffer(GL_RENDERBUFFER, _depthRenderBuffer);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16,
                           self.frame.size.width * _eaglLayer.contentsScale,
@@ -359,6 +362,7 @@ UIImage *PYChartDefaultTextureImage;
 }
 
 - (BOOL)__compileShader {
+    [EAGLContext setCurrentContext:_context];
     GLuint _vertexShader = [PYChartSurface3D
                             compileShadarString:PYChartVertexShadarString
                             withType:GL_VERTEX_SHADER];
@@ -419,6 +423,7 @@ UIImage *PYChartDefaultTextureImage;
 - (void)render {
     PYSingletonLock
     if ( !_context ) return;
+    [EAGLContext setCurrentContext:_context];
     if ( _rgData.vertices == NULL ) return;
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -647,6 +652,12 @@ UIImage *PYChartDefaultTextureImage;
     for ( NSString *_key in _keys ) {
         [self removeRenderGroupForKey:_key];
     }
+}
+
+// Force to Set the OpenGL Context
+- (void)useCurrentSurface
+{
+    [EAGLContext setCurrentContext:_context];
 }
 
 // Initialize the surface with specified vertices.

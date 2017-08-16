@@ -106,6 +106,9 @@ typedef NS_ENUM(NSInteger, PYChartSurface3DZoom) {
 // Default is YES
 @property (nonatomic, assign)   BOOL        allowRotateAroundZ;
 
+// Force to Set the OpenGL Context
+- (void)useCurrentSurface;
+
 // Initialize the surface with specified vertices.
 - (void)prepareSurfaceWithVertexTable:(PYChartSurface3DVertexTable)table expandTimes:(NSUInteger)expand;
 
