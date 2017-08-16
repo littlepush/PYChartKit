@@ -133,6 +133,7 @@ UIImage *PYChartDefaultTextureImage;
     float                           *_cachedValues;
     PYChartSurface3DVertexTable     _table;
     NSUInteger                      _expandTimes;
+    float                           _valueRate;
     
     // Buffers
     PYChart3DRenderGroup            _rgData;
@@ -558,6 +559,7 @@ UIImage *PYChartDefaultTextureImage;
     _zoomMode = PYChartSurface3DZoomNormal;
     
     _expendObjects = [NSMutableDictionary dictionary];
+    _valueRate = 0.f;
     
     UIPanGestureRecognizer *_pg = [[UIPanGestureRecognizer alloc]
                                    initWithTarget:self
@@ -765,6 +767,9 @@ UIImage *PYChartDefaultTextureImage;
     _delta = _delta / _maxValue * _maxZ;
     _maxValue = 1.f / 1.5f * _maxZ;
     _minValue = _maxValue - _delta;
+    
+    _valueRate = _originMaxV / _maxZ;
+    
     BOOL _customizedColor = [self.delegate respondsToSelector:@selector(surface3DChart:colorForValue:)];
     if ( _expandTimes == 1 ) {
         for ( uint32_t r = 0; r < _table.row; ++r ) {
@@ -775,7 +780,7 @@ UIImage *PYChartDefaultTextureImage;
                 float _value = values[_i];
                 UIColor *_tc = nil;
                 if ( _customizedColor ) {
-                    _tc = [self.delegate surface3DChart:self colorForValue:values[_i] / _maxZ * _originMaxV];
+                    _tc = [self.delegate surface3DChart:self colorForValue:values[_i] * _valueRate];
                 } else {
                     _tc = [UIColor whiteColor];
                 }
@@ -814,7 +819,7 @@ UIImage *PYChartDefaultTextureImage;
                 }
                 UIColor *_tc = nil;
                 if ( _customizedColor ) {
-                    _tc = [self.delegate surface3DChart:self colorForValue:_value / _maxZ * _originMaxV];
+                    _tc = [self.delegate surface3DChart:self colorForValue:_value * _valueRate];
                 } else {
                     _tc = [UIColor whiteColor];
                 }
@@ -912,7 +917,7 @@ UIImage *PYChartDefaultTextureImage;
             if (isnan(_v)) {
                 [_data addObject:@(0)];
             } else {
-                [_data addObject:@(_v)];
+                [_data addObject:@(_v * _valueRate)];
             }
         }
     }
@@ -950,7 +955,7 @@ UIImage *PYChartDefaultTextureImage;
             if (isnan(_v)) {
                 [_data addObject:@(0)];
             } else {
-                [_data addObject:@(_v)];
+                [_data addObject:@(_v * _valueRate)];
             }
         }
     }
