@@ -46,6 +46,7 @@
 #import "PYCycleProgress.h"
 #import "PYChartSurface3DUtility.h"
 #import "PYChartSurface3D.h"
+#import "PYPieChart.h"
 
 // @littlepush
 // littlepush@gmail.com

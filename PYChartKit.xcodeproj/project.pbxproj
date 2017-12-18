@@ -17,6 +17,7 @@
 		E6E8B9661A7812E600FDF235 /* PYCurveChart.m in Sources */ = {isa = PBXBuildFile; fileRef = E6E8B9611A7812E600FDF235 /* PYCurveChart.m */; };
 		E6E8B9671A7812E600FDF235 /* PYCurveChartLayer.m in Sources */ = {isa = PBXBuildFile; fileRef = E6E8B9631A7812E600FDF235 /* PYCurveChartLayer.m */; };
 		E6E8B9681A7812E600FDF235 /* PYCycleProgress.m in Sources */ = {isa = PBXBuildFile; fileRef = E6E8B9651A7812E600FDF235 /* PYCycleProgress.m */; };
+		E6F8E9B71FE8005400DB1CE1 /* PYPieChart.m in Sources */ = {isa = PBXBuildFile; fileRef = E6F8E9B61FE8005400DB1CE1 /* PYPieChart.m */; };
 		F6AA0A74D971C30E1E17A944 /* libPods-PYChartKitTest.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AC8B7DB44A88F8C6203DA845 /* libPods-PYChartKitTest.a */; };
 /* End PBXBuildFile section */
 
@@ -64,6 +65,8 @@
 		E6E8B9631A7812E600FDF235 /* PYCurveChartLayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PYCurveChartLayer.m; sourceTree = "<group>"; };
 		E6E8B9641A7812E600FDF235 /* PYCycleProgress.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PYCycleProgress.h; sourceTree = "<group>"; };
 		E6E8B9651A7812E600FDF235 /* PYCycleProgress.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PYCycleProgress.m; sourceTree = "<group>"; };
+		E6F8E9B51FE8005400DB1CE1 /* PYPieChart.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PYPieChart.h; sourceTree = "<group>"; };
+		E6F8E9B61FE8005400DB1CE1 /* PYPieChart.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PYPieChart.m; sourceTree = "<group>"; };
 		F7C8F1CF54EAB0471D0A02AB /* Pods-PYChartKit.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PYChartKit.release.xcconfig"; path = "Pods/Target Support Files/Pods-PYChartKit/Pods-PYChartKit.release.xcconfig"; sourceTree = "<group>"; };
 		FFC026B8E39ACF2639547B75 /* Pods-PYChartKit.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PYChartKit.debug.xcconfig"; path = "Pods/Target Support Files/Pods-PYChartKit/Pods-PYChartKit.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -144,6 +147,8 @@
 				E6E8B9641A7812E600FDF235 /* PYCycleProgress.h */,
 				E6E8B9651A7812E600FDF235 /* PYCycleProgress.m */,
 				E6E8B9491A7811D800FDF235 /* PYChartKit.h */,
+				E6F8E9B51FE8005400DB1CE1 /* PYPieChart.h */,
+				E6F8E9B61FE8005400DB1CE1 /* PYPieChart.m */,
 			);
 			path = PYChartKit;
 			sourceTree = "<group>";
@@ -207,7 +212,7 @@
 		E6E8B93E1A7811D800FDF235 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0830;
+				LastUpgradeCheck = 0920;
 				ORGANIZATIONNAME = "Push Lab";
 				TargetAttributes = {
 					E66A09991EB213CD0065E286 = {
@@ -341,6 +346,7 @@
 			files = (
 				E6B39F081EE29DD90085D0AF /* PYChartSurface3DUtility.m in Sources */,
 				E6D7CD6C1ED7638C0020F18A /* PYChartSurface3D.m in Sources */,
+				E6F8E9B71FE8005400DB1CE1 /* PYPieChart.m in Sources */,
 				E6E8B9671A7812E600FDF235 /* PYCurveChartLayer.m in Sources */,
 				E6E8B9681A7812E600FDF235 /* PYCycleProgress.m in Sources */,
 				E6E8B9661A7812E600FDF235 /* PYCurveChart.m in Sources */,
@@ -410,14 +416,20 @@
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
@@ -454,14 +466,20 @@
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
