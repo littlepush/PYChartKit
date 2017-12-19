@@ -114,6 +114,9 @@
     }
     if ( _newHighlight != _highlightIndex ) {
         _highlightIndex = _newHighlight;
+        if ( [self.datasource respondsToSelector:@selector(pie:highlightPartAtIndex:)] ) {
+            [self.datasource pie:self highlightPartAtIndex:_highlightIndex];
+        }
         [self setNeedsDisplay];
     }
 }

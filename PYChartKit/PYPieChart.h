@@ -41,5 +41,8 @@
 // Default is Random
 - (UIColor *)pie:(PYPieChart *)pie colorOfPartAtIndex:(NSInteger)index;
 
+// Callback when highlight a part
+- (void)pie:(PYPieChart *)pie highlightPartAtIndex:(NSInteger)index;
+
 @end
 

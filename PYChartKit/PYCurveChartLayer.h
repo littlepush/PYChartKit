@@ -43,6 +43,12 @@
 #import <PYUIKit/PYUIKit.h>
 #import <PYControllers/PYControllers.h>
 
+typedef NS_ENUM(NSInteger, PYCurveChartMode)
+{
+    PYCurveChartModeCurve,
+    PYCurveChartModeBar,
+};
+
 @protocol PYCurveChartLayerDataSource;
 
 @interface PYCurveChartLayer : PYLayer
@@ -66,6 +72,9 @@
 
 // Point radius, default is 3
 @property (nonatomic, assign)   float       pointRaidus;
+
+// Default is PYCurveChartModeCurve
+@property (nonatomic, assign)   PYCurveChartMode    chartMode;
 
 @end
 
@@ -92,3 +101,4 @@
 // @littlepush
 // littlepush@gmail.com
 // PYLab
+

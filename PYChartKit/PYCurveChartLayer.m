@@ -78,6 +78,7 @@ void getBezierCurveControlPoint(CGPoint p0, CGPoint p1, CGPoint p2, CGFloat t, C
     self.pointRaidus = 3.f;
     self.maxXCoordinate = 100;
     self.maxYCoordinate = 100;
+    self.chartMode = PYCurveChartModeCurve;
 }
 
 - (void)layerJustBeenCopyed
@@ -89,6 +90,7 @@ void getBezierCurveControlPoint(CGPoint p0, CGPoint p1, CGPoint p2, CGFloat t, C
     self.pointRaidus = 3.f;
     self.maxXCoordinate = 100;
     self.maxYCoordinate = 100;
+    self.chartMode = PYCurveChartModeCurve;
 }
 
 - (void)setFrame:(CGRect)frame
@@ -121,59 +123,86 @@ void getBezierCurveControlPoint(CGPoint p0, CGPoint p1, CGPoint p2, CGFloat t, C
     _showPoints = showPoints;
     
     for ( NSUInteger _cc = 0; _cc < _chartCount; ++_cc ) {
-        UIBezierPath *_curvePath = [UIBezierPath bezierPath];
         NSUInteger _pointCount = [self.dataSource pointCountOfChart:self forCurveAtIndex:_cc];
         if ( _pointCount == 0 ) continue;
-        CGPoint *_points = (CGPoint *)malloc(sizeof(CGPoint) * (_pointCount + 2));
         
-        // Record the point source path array
-        NSMutableArray *_sourceArray = [NSMutableArray array];
-        CGFloat _pointRadius = self.pointRaidus;
-        for ( NSUInteger _pi = 1; _pi <= _pointCount; ++_pi ) {
-            _points[_pi] = [self.dataSource
-                            pointForChart:self
-                            atIndexPath:[NSIndexPath
-                                         indexPathForRow:_pi - 1
-                                         inSection:_cc]];
-            // Transform
-            _points[_pi].x = self.frame.size.width * (_points[_pi].x / self.maxXCoordinate);
-            _points[_pi].y = self.frame.size.height * (1 - _points[_pi].y / self.maxYCoordinate);
+        if ( self.chartMode == PYCurveChartModeCurve ) {
+            UIBezierPath *_curvePath = [UIBezierPath bezierPath];
+            CGPoint *_points = (CGPoint *)malloc(sizeof(CGPoint) * (_pointCount + 2));
             
-            CGRect _pointRect = CGRectMake(_points[_pi].x - _pointRadius, _points[_pi].y - _pointRadius,
-                                           _pointRadius * 2, _pointRadius * 2);
-            UIBezierPath *_ptPath = [UIBezierPath bezierPathWithRoundedRect:_pointRect cornerRadius:_pointRadius];
-            [_sourceArray addObject:_ptPath];
-        }
-        [_pointsPathSource addObject:_sourceArray];
-        
-        // Fill the head and tail
-        _points[0].x = 0;
-        _points[0].y = _points[1].y;
-        _points[_pointCount + 1].x = self.frame.size.width;
-        _points[_pointCount + 1].y = _points[_pointCount].y;
-        
-        CGPoint *_controlPoints = (CGPoint *)malloc(sizeof(CGPoint) * (_pointCount * 2));
-        for ( int i = 0; i < _pointCount; ++i ) {
-            getBezierCurveControlPoint(_points[i], _points[i + 1], _points[i + 2], self.tension,
-                                       _controlPoints + i * 2, _controlPoints + (i * 2 + 1));
-        }
-        
-        [_curvePath moveToPoint:_points[1]];    // Start point
-        for ( int i = 2; i <= _pointCount; ++i ) {
-            [_curvePath addCurveToPoint:_points[i]
-                          controlPoint1:_controlPoints[(i - 2) * 2 + 1]
-                          controlPoint2:_controlPoints[(i - 2) * 2 + 2]];
-        }
-        
-        free(_controlPoints);
-        free(_points);
-        
-        if ( [self.dataSource respondsToSelector:@selector(chartLineWidth:forCurveAtIndex:)] ) {
-            [_curvePath setLineWidth:[self.dataSource chartLineWidth:self forCurveAtIndex:_cc]];
+            // Record the point source path array
+            NSMutableArray *_sourceArray = [NSMutableArray array];
+            CGFloat _pointRadius = self.pointRaidus;
+            for ( NSUInteger _pi = 1; _pi <= _pointCount; ++_pi ) {
+                _points[_pi] = [self.dataSource
+                                pointForChart:self
+                                atIndexPath:[NSIndexPath
+                                             indexPathForRow:_pi - 1
+                                             inSection:_cc]];
+                // Transform
+                _points[_pi].x = self.frame.size.width * (_points[_pi].x / self.maxXCoordinate);
+                _points[_pi].y = self.frame.size.height * (1 - _points[_pi].y / self.maxYCoordinate);
+                
+                CGRect _pointRect = CGRectMake(_points[_pi].x - _pointRadius, _points[_pi].y - _pointRadius,
+                                               _pointRadius * 2, _pointRadius * 2);
+                UIBezierPath *_ptPath = [UIBezierPath bezierPathWithRoundedRect:_pointRect cornerRadius:_pointRadius];
+                [_sourceArray addObject:_ptPath];
+            }
+            [_pointsPathSource addObject:_sourceArray];
+            
+            // Fill the head and tail
+            _points[0].x = 0;
+            _points[0].y = _points[1].y;
+            _points[_pointCount + 1].x = self.frame.size.width;
+            _points[_pointCount + 1].y = _points[_pointCount].y;
+            
+            CGPoint *_controlPoints = (CGPoint *)malloc(sizeof(CGPoint) * (_pointCount * 2));
+            for ( int i = 0; i < _pointCount; ++i ) {
+                getBezierCurveControlPoint(_points[i], _points[i + 1], _points[i + 2], self.tension,
+                                           _controlPoints + i * 2, _controlPoints + (i * 2 + 1));
+            }
+            
+            [_curvePath moveToPoint:_points[1]];    // Start point
+            for ( int i = 2; i <= _pointCount; ++i ) {
+                [_curvePath addCurveToPoint:_points[i]
+                              controlPoint1:_controlPoints[(i - 2) * 2 + 1]
+                              controlPoint2:_controlPoints[(i - 2) * 2 + 2]];
+            }
+            
+            free(_controlPoints);
+            free(_points);
+            
+            if ( [self.dataSource respondsToSelector:@selector(chartLineWidth:forCurveAtIndex:)] ) {
+                [_curvePath setLineWidth:[self.dataSource chartLineWidth:self forCurveAtIndex:_cc]];
+            } else {
+                [_curvePath setLineWidth:2.f];
+            }
+            [_pathArray addObject:_curvePath];
         } else {
-            [_curvePath setLineWidth:2.f];
+            NSMutableArray *_barGroupPath = [NSMutableArray array];
+            float _barMaxWidth = self.frame.size.width / (_pointCount * 2 + 1);
+            float _barWidth = _barMaxWidth / _chartCount;
+            for ( NSUInteger _pi = 0; _pi < _pointCount; ++_pi ) {
+                CGPoint _value = [self.dataSource
+                                  pointForChart:self
+                                  atIndexPath:[NSIndexPath
+                                               indexPathForRow:_pi
+                                               inSection:_cc]];
+                // Transform
+                if ( isnan(_value.x) == false ) {
+                    _value.x = self.frame.size.width * (_value.x / self.maxXCoordinate);
+                }
+                _value.y = self.frame.size.height * (1 - _value.y / self.maxYCoordinate);
+                UIBezierPath *_barPath = [UIBezierPath
+                                          bezierPathWithRect:
+                                          CGRectMake((_barMaxWidth * 2) * _pi + _barMaxWidth + _barWidth * _cc,
+                                                     _value.y,
+                                                     _barWidth,
+                                                     self.frame.size.height - _value.y)];
+                [_barGroupPath addObject:_barPath];
+            }
+            [_pathArray addObject:_barGroupPath];
         }
-        [_pathArray addObject:_curvePath];
         
         if ( [self.dataSource respondsToSelector:@selector(chartLineColor:forCurveAtIndex:)] ) {
             [_colorArray addObject:[self.dataSource chartLineColor:self forCurveAtIndex:_cc]];
@@ -181,10 +210,12 @@ void getBezierCurveControlPoint(CGPoint p0, CGPoint p1, CGPoint p2, CGFloat t, C
             [_colorArray addObject:[UIColor randomColor]];
         }
         
-        if ( [self.dataSource respondsToSelector:@selector(chartPointColor:forCurveAtIndex:)] ) {
-            [_pointColorArray addObject:[self.dataSource chartPointColor:self forCurveAtIndex:_cc]];
-        } else {
-            [_pointColorArray addObject:[_colorArray lastObject]];
+        if ( self.chartMode == PYCurveChartModeCurve ) {
+            if ( [self.dataSource respondsToSelector:@selector(chartPointColor:forCurveAtIndex:)] ) {
+                [_pointColorArray addObject:[self.dataSource chartPointColor:self forCurveAtIndex:_cc]];
+            } else {
+                [_pointColorArray addObject:[_colorArray lastObject]];
+            }
         }
     }
     
@@ -197,50 +228,63 @@ void getBezierCurveControlPoint(CGPoint p0, CGPoint p1, CGPoint p2, CGFloat t, C
     NSUInteger _c = _pathArray.count;
     UIColor *_wcolor = [UIColor whiteColor];
     
-    for ( NSUInteger i = 0; i < _c; ++i ) {
-        UIBezierPath *_bPath = [_pathArray objectAtIndex:i];
-        UIColor *_lColor = [_colorArray objectAtIndex:i];
-        UIColor *_pColor = [_pointColorArray objectAtIndex:i];
-
-        // Shadow
-        if ( self.showShadow ) {
-            PYColorInfo _colorInfo = [_lColor colorInfo];
+    if ( self.chartMode == PYCurveChartModeCurve ) {
+        for ( NSUInteger i = 0; i < _c; ++i ) {
+            UIBezierPath *_bPath = [_pathArray objectAtIndex:i];
+            UIColor *_lColor = [_colorArray objectAtIndex:i];
+            UIColor *_pColor = [_pointColorArray objectAtIndex:i];
+            
             // Shadow
-            UIColor *_startColor = [UIColor colorWithRed:_colorInfo.red
-                                                   green:_colorInfo.green
-                                                    blue:_colorInfo.blue
-                                                   alpha:.5f];
-            UIColor *_shadowColor = [UIColor colorWithGradientColors:@[_startColor,
-                                                                       [UIColor
-                                                                        colorWithWhite:1.f
-                                                                        alpha:0.f]]
-                                                          fillHeight:self.frame.size.height];
-            CGContextSetFillColorWithColor(ctx, _shadowColor.CGColor);
-            CGRect _box = _bPath.bounds;
-            CGPoint _lastPoint = _bPath.currentPoint;
-            UIBezierPath *_shadowPath = [UIBezierPath bezierPathWithCGPath:_bPath.CGPath];
-            [_shadowPath addLineToPoint:CGPointMake(_lastPoint.x, self.frame.size.height)];
-            [_shadowPath addLineToPoint:CGPointMake(_box.origin.x, self.frame.size.height)];
-            [_shadowPath closePath];
-            CGContextAddPath(ctx, _shadowPath.CGPath);
-            CGContextFillPath(ctx);
-        }
-        
-        // Line
-        CGContextSetStrokeColorWithColor(ctx, _lColor.CGColor);
-        CGContextAddPath(ctx, _bPath.CGPath);
-        CGContextSetLineWidth(ctx, _bPath.lineWidth);
-        CGContextStrokePath(ctx);
-        
-        if ( _showPoints ) {
-            CGContextSetFillColorWithColor(ctx, _wcolor.CGColor);
-            CGContextSetStrokeColorWithColor(ctx, _pColor.CGColor);
+            if ( self.showShadow ) {
+                PYColorInfo _colorInfo = [_lColor colorInfo];
+                // Shadow
+                UIColor *_startColor = [UIColor colorWithRed:_colorInfo.red
+                                                       green:_colorInfo.green
+                                                        blue:_colorInfo.blue
+                                                       alpha:.5f];
+                UIColor *_shadowColor = [UIColor colorWithGradientColors:@[_startColor,
+                                                                           [UIColor
+                                                                            colorWithWhite:1.f
+                                                                            alpha:0.f]]
+                                                              fillHeight:self.frame.size.height];
+                CGContextSetFillColorWithColor(ctx, _shadowColor.CGColor);
+                CGRect _box = _bPath.bounds;
+                CGPoint _lastPoint = _bPath.currentPoint;
+                UIBezierPath *_shadowPath = [UIBezierPath bezierPathWithCGPath:_bPath.CGPath];
+                [_shadowPath addLineToPoint:CGPointMake(_lastPoint.x, self.frame.size.height)];
+                [_shadowPath addLineToPoint:CGPointMake(_box.origin.x, self.frame.size.height)];
+                [_shadowPath closePath];
+                CGContextAddPath(ctx, _shadowPath.CGPath);
+                CGContextFillPath(ctx);
+            }
+            
+            // Line
+            CGContextSetStrokeColorWithColor(ctx, _lColor.CGColor);
+            CGContextAddPath(ctx, _bPath.CGPath);
             CGContextSetLineWidth(ctx, _bPath.lineWidth);
-            NSMutableArray *_sourcePoints = [_pointsPathSource objectAtIndex:i];
-            for ( UIBezierPath *_ptPath in _sourcePoints ) {
-                CGContextAddPath(ctx, _ptPath.CGPath);
-//                CGContextFillPath(ctx);
-                CGContextDrawPath(ctx, kCGPathFillStroke);
+            CGContextStrokePath(ctx);
+            
+            if ( _showPoints ) {
+                CGContextSetFillColorWithColor(ctx, _wcolor.CGColor);
+                CGContextSetStrokeColorWithColor(ctx, _pColor.CGColor);
+                CGContextSetLineWidth(ctx, _bPath.lineWidth);
+                NSMutableArray *_sourcePoints = [_pointsPathSource objectAtIndex:i];
+                for ( UIBezierPath *_ptPath in _sourcePoints ) {
+                    CGContextAddPath(ctx, _ptPath.CGPath);
+                    //                CGContextFillPath(ctx);
+                    CGContextDrawPath(ctx, kCGPathFillStroke);
+                }
+            }
+        }
+    } else {
+        for ( NSUInteger i = 0; i < _c; ++i ) {
+            NSArray *_barGroup = [_pathArray objectAtIndex:i];
+            UIColor *_barColor = [_colorArray objectAtIndex:i];
+            // [_barColor setFill];
+            CGContextSetFillColorWithColor(ctx, _barColor.CGColor);
+            for ( UIBezierPath *_barPath in _barGroup ) {
+                CGContextAddPath(ctx, _barPath.CGPath);
+                CGContextFillPath(ctx);
             }
         }
     }
@@ -251,3 +295,4 @@ void getBezierCurveControlPoint(CGPoint p0, CGPoint p1, CGPoint p2, CGFloat t, C
 // @littlepush
 // littlepush@gmail.com
 // PYLab
+

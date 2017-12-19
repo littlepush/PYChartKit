@@ -81,6 +81,12 @@
 // Reload the chart
 - (void)reloadChart;
 
+// Change to bar mode, will cause reload chart to be invoked.
+- (void)changeChartToBarMode;
+
+// Change to curve mode(defualt mode)
+- (void)changeChartToCurveMode;
+
 @end
 
 @protocol PYCurveChartDataSource <NSObject>
@@ -106,3 +112,4 @@
 // @littlepush
 // littlepush@gmail.com
 // PYLab
+

@@ -223,16 +223,32 @@
 }
 
 /*
-// Only override drawRect: if you perform custom drawing.
-// An empty implementation adversely affects performance during animation.
-- (void)drawRect:(CGRect)rect
+ // Only override drawRect: if you perform custom drawing.
+ // An empty implementation adversely affects performance during animation.
+ - (void)drawRect:(CGRect)rect
+ {
+ // Drawing code
+ }
+ */
+// Change to bar mode, will cause reload chart to be invoked.
+- (void)changeChartToBarMode
 {
-    // Drawing code
+    if ( _chartLayer.chartMode == PYCurveChartModeBar ) return;
+    _chartLayer.chartMode = PYCurveChartModeBar;
+    [self reloadChart];
 }
-*/
+
+// Change to curve mode(defualt mode)
+- (void)changeChartToCurveMode
+{
+    if ( _chartLayer.chartMode == PYCurveChartModeCurve ) return;
+    _chartLayer.chartMode = PYCurveChartModeCurve;
+    [self reloadChart];
+}
 
 @end
 
 // @littlepush
 // littlepush@gmail.com
 // PYLab
+
