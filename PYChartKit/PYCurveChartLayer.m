@@ -180,8 +180,8 @@ void getBezierCurveControlPoint(CGPoint p0, CGPoint p1, CGPoint p2, CGFloat t, C
             [_pathArray addObject:_curvePath];
         } else {
             NSMutableArray *_barGroupPath = [NSMutableArray array];
-            float _barMaxWidth = self.frame.size.width / (_pointCount * 2 + 1);
-            float _barWidth = _barMaxWidth / _chartCount;
+//            float _barMaxWidth = self.frame.size.width / (_pointCount * 2 + 1);
+//            float _barWidth = _barMaxWidth / _chartCount;
             for ( NSUInteger _pi = 0; _pi < _pointCount; ++_pi ) {
                 CGPoint _value = [self.dataSource
                                   pointForChart:self
@@ -195,9 +195,9 @@ void getBezierCurveControlPoint(CGPoint p0, CGPoint p1, CGPoint p2, CGFloat t, C
                 _value.y = self.frame.size.height * (1 - _value.y / self.maxYCoordinate);
                 UIBezierPath *_barPath = [UIBezierPath
                                           bezierPathWithRect:
-                                          CGRectMake((_barMaxWidth * 2) * _pi + _barMaxWidth + _barWidth * _cc,
+                                          CGRectMake(_value.x + _cc * _pointRaidus,
                                                      _value.y,
-                                                     _barWidth,
+                                                     _pointRaidus,
                                                      self.frame.size.height - _value.y)];
                 [_barGroupPath addObject:_barPath];
             }
